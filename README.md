@@ -1,6 +1,6 @@
 # Barbarik
 
-Barbarik is a framework developed to test whether a sampler is uniform or not. Currently it is implemented for testing QuickSampler, STS, Unigen, Solver(CryptoMiniSat). It uses MUSE as the underlying uniform sampler. This work is by Kuldeep Meel and Sourav Chakraborty, as published in [AAAI'19](https://www.comp.nus.edu.sg/~meel/Papers/aaai19-cm.pdf).  
+Barbarik is a framework developed to test whether a sampler is almost uniform or not. Currently it is implemented for testing QuickSampler, STS, Unigen, Solver(CryptoMiniSat). It uses MUSE as the underlying uniform sampler. This work is by Kuldeep Meel and Sourav Chakraborty, as published in [AAAI'19](https://www.comp.nus.edu.sg/~meel/Papers/aaai19-cm.pdf).  
 
 ## Getting Started
 To get started either download the ZIP file from the repository or git clone it using the following:
