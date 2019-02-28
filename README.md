@@ -38,8 +38,4 @@ Please make appropriate changes to code for OtherSampler
 ## How to Cite
 
 If you use Barbarik, please cite the following paper : [AAAI'19](https://www.comp.nus.edu.sg/~meel/Papers/aaai19-cm.pdf)
- 
 
-## License
-
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
