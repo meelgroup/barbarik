@@ -10,19 +10,23 @@ git clone https://github.com/meelgroup/barbarik.git
 
 ### Prerequisites
 Please install the following in the same directory as the repository :
-* [MUSE](https://github.com/ZaydH/spur) - Perfectly Uniform Satisfying Assignments 
+* [MUSE](https://github.com/ZaydH/spur) - Perfectly Uniform Satisfying Assignments
 * [CrytoMiniSat](https://github.com/msoos/cryptominisat) - SAT solver implemented
-* [STS](https://github.com/meelgroup/khatu/blob/master/STS) 
+* [STS](https://github.com/meelgroup/khatu/blob/master/STS)
 * [Unigen](https://bitbucket.org/kuldeepmeel/unigen) - almost-uniform sat sampler
 * [Quick Sampler](https://github.com/RafaelTupynamba/quicksampler)
 
 ### Installing
 
-After you have installed the above mentioned tools and cloned the repository you are good to go. Inorder to run a custom sampler please make appropriate changes to the code to adjust according to need. 
+After you have installed the above mentioned tools and cloned the repository you are good to go. Inorder to run a custom sampler please make appropriate changes to the code to adjust according to need. To make changes for CustomSampler type look for the following tag in ```Verifier.py``` file:
+``` 
+# @CHANGE_HERE : please make changes in the below block of code
+```
+
 ## Running the tests
 
 In order to run tests please keep your cnf files according to DIMACS format in the same directory as of the file run_verifier.py.
-To run use the following command: 
+To run use the following command:
 ```
 python run_verifier.py --sampler SAMPLER_TYPE
 ```
@@ -38,4 +42,3 @@ Please make appropriate changes to code for OtherSampler
 ## How to Cite
 
 If you use Barbarik, please cite the following paper : [AAAI'19](https://www.comp.nus.edu.sg/~meel/Papers/aaai19-cm.pdf)
-

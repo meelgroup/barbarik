@@ -62,6 +62,7 @@ def getSolutionFromUniGen(inputFile,numSolutions):
     os.system(cmd)
     return solreturnList
 
+# @CHANGE_HERE : please make changes in the below block of code
 ''' this is the method where you could run your sampler for testing
 Arguments : input file, number of solutions to be returned, list of independent variables
 output : list of solutions '''
@@ -72,6 +73,7 @@ def getSolutionFromCustomSampler(inputFile,numSolutions,indVarList):
     ''' write your code here '''
 
     return solreturnList
+''' END OF BLOCK '''
 
 def getSolutionFromSATSolver(inputFile,numSolutions):
     inputFileSuffix = inputFile.split('/')[-1][:-4]
