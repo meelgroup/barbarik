@@ -21,7 +21,7 @@ Please install the following in the same directory as the repository :
 After you have installed the above mentioned tools and cloned the repository you are good to go. Inorder to run a custom sampler please make appropriate changes to the code to adjust according to need. 
 ## Running the tests
 
-In order to run tests please keep your cnf files according to DIMACS format in the same directory as of the file run_verifier.py
+In order to run tests please keep your cnf files according to DIMACS format in the same directory as of the file run_verifier.py.
 To run use the following command: 
 ```
 python run_verifier.py --sampler SAMPLER_TYPE
