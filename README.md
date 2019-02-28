@@ -19,7 +19,7 @@ Please install the following in the same directory as the repository :
 ### Installing
 
 After you have installed the above mentioned tools and cloned the repository you are good to go. Inorder to run a custom sampler please make appropriate changes to the code to adjust according to need. To make changes for CustomSampler type look for the following tag in ```Verifier.py``` file:
-``` 
+```
 # @CHANGE_HERE : please make changes in the below block of code
 ```
 
@@ -35,9 +35,9 @@ SAMPLER_TYPE takes the following values:
 * Solver = 2
 * QuickSampler = 3
 * STS = 4
-* OtherSampler = 5
+* CustomSampler = 5
 
-Please make appropriate changes to code for OtherSampler
+Please make appropriate changes to code for CustomSampler
 
 ## How to Cite
 

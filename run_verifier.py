@@ -4,8 +4,8 @@ import tempfile
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--samplerType', type=int, help="Sampler Type;\n UniGen=1, Solver=2, QuickSampler=3,STS=4, OtherSampler=5;\n" + \
-  "(Please make appropriate changes to code for OtherSampler);\n" + "default = 2", default = 2, dest= 'samplerType')
+parser.add_argument('--samplerType', type=int, help="Sampler Type;\n UniGen=1, Solver=2, QuickSampler=3,STS=4, CustomSampler=5;\n" + \
+  "(Please make appropriate changes to code for CustomSampler);\n" + "default = 2", default = 2, dest= 'samplerType')
 tempDir = tempfile.gettempdir()
 processrankStr = os.environ.get("OMPI_COMM_WORLD_RANK")
 if (processrankStr == None):
