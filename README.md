@@ -42,3 +42,7 @@ Please make appropriate changes to code for CustomSampler
 ## How to Cite
 
 If you use Barbarik, please cite the following paper : [AAAI'19](https://www.comp.nus.edu.sg/~meel/Papers/aaai19-cm.pdf)
+
+## Contributors
+1. Kuldeep S. Meel
+2. Shayak Chakraborty 
