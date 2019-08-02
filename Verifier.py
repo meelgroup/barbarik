@@ -9,10 +9,9 @@ import tempfile
 from random import shuffle
 
 SAMPLER_UNIGEN = 1
-SAMPLER_SATSOLVER = 2
-SAMPLER_QUICKSAMPLER = 3
-SAMPLER_STS = 4
-SAMPLER_CUSTOM = 5
+SAMPLER_QUICKSAMPLER = 2
+SAMPLER_STS = 3
+SAMPLER_CUSTOM = 4
 
 #returns List of Independent Variables
 def parseIndSupport(indSupportFile):
@@ -75,34 +74,7 @@ def getSolutionFromCustomSampler(inputFile,numSolutions,indVarList):
     return solreturnList
 ''' END OF BLOCK '''
 
-def getSolutionFromSATSolver(inputFile,numSolutions):
-    inputFileSuffix = inputFile.split('/')[-1][:-4]
-    tempOutputFile = tempfile.gettempdir()+'/'+inputFileSuffix+".out"
-    solList = []
-    iterations = numSolutions
-    for i in range(iterations):
-        randomSeed = random.randint(0,2**10)
-        cmd = "./cryptominisat/build/cryptominisat5 --restart luby --maple 0 --verb 0 --scc 1 -n1 --presimp 0 --polar rnd --freq 0.9999 --random "+str(randomSeed)+" "+inputFile+' > '+tempOutputFile
-        #cmd = "cryptominisat5 --verb 0 --random "+str(randomSeed)+" "+inputFile+' > '+tempOutputFile
-        #cmd = "./cryptominisat4 --verb 0 --random "+str(randomSeed)+" --maxsol "+str(numSolutions)+" "+inputFile+' > '+tempOutputFile
-        os.system(cmd)
-        f = open(tempOutputFile,'r')
-        lines = f.readlines()
-        f.close()
-        sol = ''
-        for line in lines:
-            if (line.strip().startswith('v ')):
-                fields = line.strip('v ').strip().split()
-                for x in fields:
-                    if (int(x) == 0):
-                        continue
-                    sol += ' '+x
-        solList.append(sol)
-    return solList
-
 def getSolutionFromSampler(inputFile,numSolutions,samplerType,indVarList):
-    if (samplerType == SAMPLER_SATSOLVER):
-        return getSolutionFromSATSolver(inputFile,numSolutions)
     if (samplerType == SAMPLER_UNIGEN):
         return getSolutionFromUniGen(inputFile,numSolutions)
     if (samplerType == SAMPLER_QUICKSAMPLER):
@@ -200,7 +172,7 @@ def getSolutionFromQuickSampler(inputFile,numSolutions,indVarList):
 def getSolutionFromMUSE(inputFile,numSolutions):
     inputFileSuffix = inputFile.split('/')[-1][:-4]
     tempOutputFile = tempfile.gettempdir()+'/'+inputFileSuffix+".out"
-    cmd = './muse -q -s '+str(numSolutions)+' -out '+str(tempOutputFile)+' -cnf '+str(inputFile)
+    cmd = './spur -q -s '+str(numSolutions)+' -out '+str(tempOutputFile)+' -cnf '+str(inputFile)
     os.system(cmd)
     f = open(tempOutputFile,'r')
     lines = f.readlines()
@@ -441,8 +413,8 @@ def Verifier():
     parser.add_argument('--eta', type=float, help = "default = 0.6", default = 0.6, dest = 'neta')
     parser.add_argument('--delta', type=float, help="default = 0.001", default = 0.05, dest = 'delta')
     parser.add_argument('--zeta', type=float, help="default = 0", default=0, dest = 'dist')
-    parser.add_argument('--sampler', type=int, help= str(SAMPLER_UNIGEN)+" for UniGen;\n"+str(SAMPLER_SATSOLVER) \
-            +" for SAT;\n"+str(SAMPLER_QUICKSAMPLER)+" for QuickSampler;\n"+str(SAMPLER_STS)+" for STS;\n", default=SAMPLER_STS, dest='sampler')
+    parser.add_argument('--sampler', type=int, help= str(SAMPLER_UNIGEN)+" for UniGen;\n"+
+            str(SAMPLER_QUICKSAMPLER)+" for QuickSampler;\n"+str(SAMPLER_STS)+" for STS;\n", default=SAMPLER_STS, dest='sampler')
     parser.add_argument('--reverse', type=int, default=0,help="order to search in", dest='searchOrder')
     parser.add_argument('--minSamples',type=int,default=0,help="min samples", dest='minSamples')
     parser.add_argument('--maxSamples',type=int,default=sys.maxsize,help="max samples", dest='maxSamples')
@@ -472,8 +444,6 @@ def Verifier():
     maxSamples = args.maxSamples
     samplerString = ''
     random.seed(seed)
-    if (samplerType == SAMPLER_SATSOLVER):
-        samplerString = 'SAT'
     if (samplerType == SAMPLER_UNIGEN):
         samplerString = 'UniGen'
     if (samplerType == SAMPLER_QUICKSAMPLER):

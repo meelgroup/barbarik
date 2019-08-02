@@ -1,6 +1,6 @@
 # Barbarik
 
-Barbarik is a framework developed to test whether a sampler is almost uniform or not. Currently it is implemented for testing QuickSampler, STS, Unigen, Solver(CryptoMiniSat). It uses MUSE as the underlying uniform sampler. This work is by Kuldeep Meel and Sourav Chakraborty, as published in [AAAI'19](https://www.comp.nus.edu.sg/~meel/Papers/aaai19-cm.pdf).  
+Barbarik is a framework developed to test whether a sampler is almost uniform or not. Currently it is implemented for testing QuickSampler, STS, Unigen. It uses SPUR as the underlying uniform sampler. This work is by Kuldeep Meel and Sourav Chakraborty, as published in [AAAI'19](https://www.comp.nus.edu.sg/~meel/Papers/aaai19-cm.pdf).  
 
 ## Getting Started
 To get started either download the ZIP file from the repository or git clone it using the following:
@@ -10,8 +10,7 @@ git clone https://github.com/meelgroup/barbarik.git
 
 ### Prerequisites
 Please install the following in the same directory as the repository :
-* [MUSE](https://github.com/ZaydH/spur) - Perfectly Uniform Satisfying Assignments
-* [CrytoMiniSat](https://github.com/msoos/cryptominisat) - SAT solver implemented
+* [SPUR](https://github.com/ZaydH/spur) - Perfectly Uniform Satisfying Assignments
 * [STS](https://github.com/meelgroup/khatu/blob/master/STS)
 * [Unigen](https://bitbucket.org/kuldeepmeel/unigen) - almost-uniform sat sampler
 * [Quick Sampler](https://github.com/RafaelTupynamba/quicksampler)
@@ -32,7 +31,6 @@ python run_verifier.py --sampler SAMPLER_TYPE
 ```
 SAMPLER_TYPE takes the following values:
 * UniGen = 1
-* Solver = 2
 * QuickSampler = 3
 * STS = 4
 * CustomSampler = 5
