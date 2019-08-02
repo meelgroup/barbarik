@@ -411,7 +411,7 @@ def Verifier():
     parser = argparse.ArgumentParser()
     parser.add_argument('--epsilon', type=float, help="default = 0.9", default = 0.9, dest= 'epsilon')
     parser.add_argument('--eta', type=float, help = "default = 0.6", default = 0.6, dest = 'neta')
-    parser.add_argument('--delta', type=float, help="default = 0.001", default = 0.05, dest = 'delta')
+    parser.add_argument('--delta', type=float, help="default = 0.05", default = 0.05, dest = 'delta')
     parser.add_argument('--zeta', type=float, help="default = 0", default=0, dest = 'dist')
     parser.add_argument('--sampler', type=int, help= str(SAMPLER_UNIGEN)+" for UniGen;\n"+
             str(SAMPLER_QUICKSAMPLER)+" for QuickSampler;\n"+str(SAMPLER_STS)+" for STS;\n", default=SAMPLER_STS, dest='sampler')
