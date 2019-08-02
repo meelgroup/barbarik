@@ -11,9 +11,9 @@ git clone https://github.com/meelgroup/barbarik.git
 ### Prerequisites
 Please install the following in the same directory as the repository :
 * [SPUR](https://github.com/ZaydH/spur) - Perfectly Uniform Satisfying Assignments
-* [STS](https://github.com/meelgroup/khatu/blob/master/STS)
-* [Unigen](https://bitbucket.org/kuldeepmeel/unigen) - almost-uniform sat sampler
+* [Unigen](https://bitbucket.org/kuldeepmeel/unigen) - almost-uniform SAT sampler
 * [Quick Sampler](https://github.com/RafaelTupynamba/quicksampler)
+* [STS](http://cs.stanford.edu/~ermon/code/STS.zip)
 
 ### Installing
 
@@ -31,9 +31,9 @@ python run_verifier.py --sampler SAMPLER_TYPE
 ```
 SAMPLER_TYPE takes the following values:
 * UniGen = 1
-* QuickSampler = 3
-* STS = 4
-* CustomSampler = 5
+* QuickSampler = 2
+* STS = 3
+* CustomSampler = 4
 
 Please make appropriate changes to code for CustomSampler
 
