@@ -421,17 +421,21 @@ def testUniformity(solList,indVarList,numSolutions,loThresh,hiThresh,outputFile)
         else:
             baseMap[sol] += 1
 
-    for key in solMap.keys():
+    if bool(solMap):
+        return False
 
-        f = open(outputFile,'a')
-        f.write("baseMap:{4} numSolutions:{3} SolutionsCount:{0} loThresh:{1} hiThresh:{2}\n".format(\
+    key = next(iter(solMap))
+
+    f = open(outputFile,'a')
+    f.write("baseMap:{4} numSolutions:{3} SolutionsCount:{0} loThresh:{1} hiThresh:{2}\n".format(\
                 solMap[key],loThresh,hiThresh,numSolutions,len(baseMap.keys())))
-        f.close()
-        if (solMap[key] >= loThresh and solMap[key] <= hiThresh):
-            return True
-        else:
-            return False
-    return False
+    f.close()
+
+    if (solMap[key] >= loThresh and solMap[key] <= hiThresh):
+        return True
+    else:
+        return False
+
 
 def Verifier():
     parser = argparse.ArgumentParser()
