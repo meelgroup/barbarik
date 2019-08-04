@@ -41,10 +41,7 @@ Please make appropriate changes to code for CustomSampler
 
 For easy comparison we provide a (modified) binary for SearchTreeSampler. [Source](https://github.com/RafaelTupynamba/quicksampler/tree/master/STS).  
 
-## Comparison with SearchTreeSampler
-
-For easy comparison we provide a binary for SCALMC. [Source](https://github.com/RafaelTupynamba/quicksampler/tree/master/STS).  
-
+## Comparison with SCALMC
 
 ## How to Cite
 
