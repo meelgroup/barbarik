@@ -37,6 +37,15 @@ SAMPLER_TYPE takes the following values:
 
 Please make appropriate changes to code for CustomSampler
 
+## Comparison with SearchTreeSampler
+
+For easy comparison we provide a (modified) binary for SearchTreeSampler. [Source](https://github.com/RafaelTupynamba/quicksampler/tree/master/STS).  
+
+## Comparison with SearchTreeSampler
+
+For easy comparison we provide a binary for SCALMC. [Source](https://github.com/RafaelTupynamba/quicksampler/tree/master/STS).  
+
+
 ## How to Cite
 
 If you use Barbarik, please cite the following paper : [AAAI'19](https://www.comp.nus.edu.sg/~meel/Papers/aaai19-cm.pdf). Here is [BIB file](https://www.comp.nus.edu.sg/~meel/bib/CM19.bib)
