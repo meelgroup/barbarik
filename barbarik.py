@@ -94,7 +94,7 @@ def getSolutionFromSTS(inputFile,numSolutions,indVarList):
     samplingRounds = numSolutions/kValue +1
     inputFileSuffix = inputFile.split('/')[-1][:-4]
     outputFile = tempfile.gettempdir()+'/'+inputFileSuffix+".out"
-    cmd = './STS -k='+str(kValue)+' -nsamples='+str(samplingRounds)+' '+str(inputFile)+' > '+str(outputFile)
+    cmd = './samplers/STS -k='+str(kValue)+' -nsamples='+str(samplingRounds)+' '+str(inputFile)+' > '+str(outputFile)
     os.system(cmd)
     f = open(outputFile,'r')
     lines = f.readlines()
@@ -135,7 +135,7 @@ def getSolutionFromSTS(inputFile,numSolutions,indVarList):
     return solList
 
 def getSolutionFromQuickSampler(inputFile,numSolutions,indVarList):
-    cmd = "./quicksampler -n "+str(numSolutions*5)+' '+str(inputFile)+' > /dev/null 2>&1'
+    cmd = "./samplers/quicksampler -n "+str(numSolutions*5)+' '+str(inputFile)+' > /dev/null 2>&1'
     os.system(cmd)
     cmd = "./z3 "+str(inputFile)+' > /dev/null 2>&1'
     os.system(cmd)
