@@ -30,7 +30,7 @@ To run use the following command:
 python run_verifier.py --sampler SAMPLER_TYPE
 ```
 SAMPLER_TYPE takes the following values:
-* UniGen = 1
+* UniGen2 = 1
 * QuickSampler = 2
 * STS = 3
 * CustomSampler = 4
