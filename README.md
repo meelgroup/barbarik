@@ -52,5 +52,6 @@ If you use Barbarik, please cite the following paper : [AAAI'19](https://www.com
 ## Contributors
 1. Kuldeep S. Meel
 2. Shayak Chakraborty 
+3. Yash Pote
 
 If you cannot use any of the available binaries, or experience any other problems, please contact us.
