@@ -34,13 +34,13 @@ def parseIndSupport(indSupportFile):
 
 def getSolutionFromUniGen(inputFile,numSolutions):
     inputFileSuffix = inputFile.split('/')[-1][:-4]
-    tempOutputFile = tempfile.gettempdir()+'/'+inputFileSuffix+"_1.txt"
-    cmd = 'python ./samplers/UniGen2.py -runIndex=1 -samples='+str(numSolutions)+' '+inputFile+' '+tempfile.gettempdir()+' > /dev/null 2>&1'
+    #tempOutputFile = tempfile.gettempdir()+'/'+inputFileSuffix+"_1.txt"
+    #cmd = 'python ./samplers/UniGen2.py -runIndex=1 -samples='+str(numSolutions)+' '+inputFile+' '+tempfile.gettempdir()+' > /dev/null 2>&1'
+    #print(cmd)
 
-
-    #tempOutputFile = tempfile.gettempdir()+'/'+inputFileSuffix+".txt"
-    #cmd = './scalmc -s 1 -v 0 --scalmc 0 --samples '+str(numSolutions)+' --sampleFile '+str(tempOutputFile)
-    #cmd +=' --multisample 1 --log Log/'+str(inputFileSuffix)+'_scalgen.log '+inputFile+' > /dev/null 2>&1'
+    tempOutputFile = tempfile.gettempdir()+'/'+inputFileSuffix+".txt"
+    cmd = './samplers/scalmc -s 1 -v 0 --scalmc 0 --samples '+str(numSolutions)+' --sampleFile '+str(tempOutputFile)
+    cmd +=' --multisample 1 '+inputFile+' > /dev/null 2>&1'
     os.system(cmd)
     f = open(tempOutputFile,'r')
     lines = f.readlines()
@@ -137,7 +137,7 @@ def getSolutionFromSTS(inputFile,numSolutions,indVarList):
 def getSolutionFromQuickSampler(inputFile,numSolutions,indVarList):
     cmd = "./samplers/quicksampler -n "+str(numSolutions*5)+' '+str(inputFile)+' > /dev/null 2>&1'
     os.system(cmd)
-    cmd = "./z3 "+str(inputFile)+' > /dev/null 2>&1'
+    cmd = "./samplers/z3 "+str(inputFile)+' > /dev/null 2>&1'
     os.system(cmd)
     if (numSolutions > 1):
         i = 0
