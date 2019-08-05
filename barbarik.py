@@ -35,7 +35,7 @@ def parseIndSupport(indSupportFile):
 def getSolutionFromUniGen(inputFile,numSolutions):
     inputFileSuffix = inputFile.split('/')[-1][:-4]
     tempOutputFile = tempfile.gettempdir()+'/'+inputFileSuffix+"_1.txt"
-    cmd = 'python UniGen2.py -runIndex=1 -samples='+str(numSolutions)+' '+inputFile+' '+tempfile.gettempdir()+' > /dev/null 2>&1'
+    cmd = 'python ./samplers/UniGen2.py -runIndex=1 -samples='+str(numSolutions)+' '+inputFile+' '+tempfile.gettempdir()+' > /dev/null 2>&1'
 
 
     #tempOutputFile = tempfile.gettempdir()+'/'+inputFileSuffix+".txt"
