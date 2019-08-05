@@ -424,8 +424,8 @@ def testUniformity(solList,indVarList,numSolutions,loThresh,hiThresh,outputFile)
 
 def Verifier():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--epsilon', type=float, help="default = 0.9", default = 0.9, dest= 'epsilon')
-    parser.add_argument('--eta', type=float, help = "default = 0.6", default = 0.6, dest = 'neta')
+    parser.add_argument('--eta', type=float, help="default = 0.9", default = 0.9, dest= 'eta')
+    parser.add_argument('--epsilon', type=float, help = "default = 0.6", default = 0.6, dest = 'epsilon')
     parser.add_argument('--delta', type=float, help="default = 0.05", default = 0.05, dest = 'delta')
     parser.add_argument('--sampler', type=int, help= str(SAMPLER_UNIGEN)+" for UniGen;\n"+
             str(SAMPLER_QUICKSAMPLER)+" for QuickSampler;\n"+str(SAMPLER_STS)+" for STS;\n", default=SAMPLER_STS, dest='sampler')
@@ -441,8 +441,8 @@ def Verifier():
     inputFile = args.input
     inputFileSuffix = inputFile.split('/')[-1][:-4]
 
+    eta = args.eta
     epsilon = args.epsilon
-    neta = args.neta
     delta = args.delta
     numExperiments = args.exp
     if (numExperiments == -1):
@@ -467,7 +467,7 @@ def Verifier():
         samplerString = 'CustomSampler'
 
     indVarList = parseIndSupport(inputFile)
-    totalLoops = int(math.ceil(math.log(2.0/(epsilon+neta),2))+1)
+    totalLoops = int(math.ceil(math.log(2.0/(eta+epsilon),2))+1)
     listforTraversal = range(totalLoops,0,-1)
     if (searchOrder == 1):
         listforTraversal = range(1,totalLoops+1,1)
@@ -477,16 +477,16 @@ def Verifier():
         totalUniformSamples = 0
         thresholdSolutions = 0
         for j in listforTraversal:
-            tj = math.ceil(math.pow(2,j)*(neta+epsilon)/((epsilon-neta)**2)*math.log(4.0/(epsilon+neta),2)*(4*math.e/(math.e-1)*math.log(1.0/delta)))
-            beta = (math.pow(2,j-1)+1)*(epsilon +neta)*1.0/(4+(neta+epsilon)*(math.pow(2,j-1) - 1))
-            gamma = (beta-neta)/4
+            tj = math.ceil(math.pow(2,j)*(epsilon+eta)/((eta-epsilon)**2)*math.log(4.0/(eta+epsilon),2)*(4*math.e/(math.e-1)*math.log(1.0/delta)))
+            beta = (math.pow(2,j-1)+1)*(eta +epsilon)*1.0/(4+(epsilon+eta)*(math.pow(2,j-1) - 1))
+            gamma = (beta-epsilon)/4
             constantFactor = math.ceil(1/(9*gamma*gamma))
-            boundFactor = math.log((16)*(math.e/(math.e-1))*(1/((epsilon-neta)**2))*math.log(4/(epsilon+neta),2)*math.log(1/delta),2)
+            boundFactor = math.log((16)*(math.e/(math.e-1))*(1/((eta-epsilon)**2))*math.log(4/(eta+epsilon),2)*math.log(1/delta),2)
             f = open(outputFile,'a')
-            f.write("constantFactor:{0} boundFactor:{1} logBoundFactor:{2}\ntj:{3} totalLoops:{4} beta:{5} neta:{6}\n".format(constantFactor,boundFactor, math.log(boundFactor,2),tj,totalLoops,beta,neta))
+            f.write("constantFactor:{0} boundFactor:{1} logBoundFactor:{2}\ntj:{3} totalLoops:{4} beta:{5} epsilon:{6}\n".format(constantFactor,boundFactor, math.log(boundFactor,2),tj,totalLoops,beta,epsilon))
             numSolutions = int(math.ceil(constantFactor*boundFactor))
-            loThresh = int((numSolutions*1.0/2)*(1-(beta+neta)/2))
-            hiThresh = int((numSolutions*1.0/2)*(1+(beta+neta)/2))
+            loThresh = int((numSolutions*1.0/2)*(1-(beta+epsilon)/2))
+            hiThresh = int((numSolutions*1.0/2)*(1+(beta+epsilon)/2))
 
             tempFile = tempfile.gettempdir()+"/"+inputFileSuffix+"_t.cnf"
 
