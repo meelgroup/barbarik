@@ -43,7 +43,7 @@ For easy comparison we provide a (modified) binary for SearchTreeSampler. [Sourc
 
 ## Comparison with SCALMC
 
-We have added a binary of scalmc in the samplers directory. It implements the UniGen2 algorithm of Chakraborty, Fremont, Meel, Seshia, and Vardi and the ApproxMC3 algorithm of Meel, and Soos. The particular implementation used is based on a prototype by Mate Soos and Kuldeep Meel which is pending publication. If you cannot use any of the available binaries, or experience any other problems, please contact us.
+We have added a binary of scalmc in the samplers directory. It implements the UniGen2 algorithm of Chakraborty, Fremont, Meel, Seshia, and Vardi and the ApproxMC3 algorithm of Meel, and Soos. The particular implementation used is based on a prototype by Mate Soos and Kuldeep Meel which is pending publication.
 
 ## How to Cite
 
@@ -52,3 +52,5 @@ If you use Barbarik, please cite the following paper : [AAAI'19](https://www.com
 ## Contributors
 1. Kuldeep S. Meel
 2. Shayak Chakraborty 
+
+If you cannot use any of the available binaries, or experience any other problems, please contact us.
