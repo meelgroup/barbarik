@@ -27,7 +27,7 @@ After you have installed the above mentioned tools and cloned the repository you
 In order to run tests please keep your cnf files according to DIMACS format in the same directory as of the file run_verifier.py.
 To run use the following command:
 ```
-python run_verifier.py --sampler SAMPLER_TYPE
+python barbarik.py --sampler SAMPLER_TYPE
 ```
 SAMPLER_TYPE takes the following values:
 * UniGen2/ScalMC = 1
