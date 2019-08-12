@@ -17,14 +17,14 @@ Please install the following in the same directory as the repository :
 
 ### Installing
 
-After you have installed the above mentioned tools and cloned the repository you are good to go. Inorder to run a custom sampler please make appropriate changes to the code to adjust according to need. To make changes for CustomSampler type look for the following tag in ```Verifier.py``` file:
+After you have installed the above mentioned tools and cloned the repository you are good to go. Inorder to run a custom sampler please make appropriate changes to the code to adjust according to need. To make changes for CustomSampler type look for the following tag in ```barbarik.py``` file:
 ```
 # @CHANGE_HERE : please make changes in the below block of code
 ```
 
 ## Running the tests
 
-In order to run tests please keep your cnf files according to DIMACS format in the same directory as of the file run_verifier.py.
+In order to run tests please keep your cnf files according to DIMACS format in the same directory as of the file barbarik.py.
 To run use the following command:
 ```
 python barbarik.py --sampler SAMPLER_TYPE
