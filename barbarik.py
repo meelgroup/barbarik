@@ -422,7 +422,7 @@ def testUniformity(solList,indVarList,numSolutions,loThresh,hiThresh,outputFile)
     else:
         return False
 
-def Verifier():
+def barbarik():
     parser = argparse.ArgumentParser()
     parser.add_argument('--eta', type=float, help="default = 0.9", default = 0.9, dest= 'eta')
     parser.add_argument('--epsilon', type=float, help = "default = 0.6", default = 0.6, dest = 'epsilon')
@@ -535,4 +535,4 @@ def Verifier():
             f.close()
         breakExperiment = False
 if __name__ == "__main__":
-    Verifier()
+    barbarik()
