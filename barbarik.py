@@ -440,6 +440,7 @@ def constructNewCNF(inputFile, tempFile, sampleSol, unifSol, rExtList, indVarLis
 
             solClause += "%d " % (-(diffIndex+sumNewVar)*unifMap[diffIndex])
             solClause += "%d 0\n" % (unifMap[i]*(i+sumNewVar))
+    del i
 
     # no idea what....
     invert = True
@@ -447,17 +448,19 @@ def constructNewCNF(inputFile, tempFile, sampleSol, unifSol, rExtList, indVarLis
     for oldVarList in rExtList[2]:
         currentNumVar = 0
         for i in range(len(oldVarList)):
+            newvar = int(newVarList[i])
+            oldvar = int(oldVarList[i])
             addedClause = ''
             addedClauseNum = 0
-            if int(oldVarList[i]) not in seenVars:
-                sign = int(oldVarList[i])/abs(int(oldVarList[i]))
+            if oldvar not in seenVars:
+                sign = int(oldvar/abs(oldvar))
                 addedClause, addedClauseNum = constructChainFormula(
-                    sign*(abs(int(oldVarList[i]))+sumNewVar),
-                    int(countList[i]), int(newVarList[i]), currentNumVar,
+                    sign*(abs(oldvar)+sumNewVar),
+                    int(countList[i]), newvar, currentNumVar,
                     invert)
 
-            seenVars[int(oldVarList[i])] = True
-            currentNumVar += int(newVarList[i])
+            seenVars[oldvar] = True
+            currentNumVar += newvar
             numCls += addedClauseNum
             solClause += addedClause
         invert = not invert
