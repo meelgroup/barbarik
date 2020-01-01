@@ -33,6 +33,7 @@ SAMPLER_QUICKSAMPLER = 2
 SAMPLER_STS = 3
 SAMPLER_CUSTOM = 4
 
+
 #returns List of Independent Variables
 def parseIndSupport(indSupportFile):
     f = open(indSupportFile,'r')
@@ -51,6 +52,7 @@ def parseIndSupport(indSupportFile):
     else:
         indList = [int(x) for x in indList]
     return indList
+
 
 def getSolutionFromUniGen(inputFile,numSolutions):
     inputFileSuffix = inputFile.split('/')[-1][:-4]
@@ -83,6 +85,7 @@ def getSolutionFromUniGen(inputFile,numSolutions):
     os.system(cmd)
     return solreturnList
 
+
 # @CHANGE_HERE : please make changes in the below block of code
 ''' this is the method where you could run your sampler for testing
 Arguments : input file, number of solutions to be returned, list of independent variables
@@ -96,6 +99,7 @@ def getSolutionFromCustomSampler(inputFile,numSolutions,indVarList):
     return solreturnList
 ''' END OF BLOCK '''
 
+
 def getSolutionFromSampler(inputFile,numSolutions,samplerType,indVarList):
     if (samplerType == SAMPLER_UNIGEN):
         return getSolutionFromUniGen(inputFile,numSolutions)
@@ -108,6 +112,7 @@ def getSolutionFromSampler(inputFile,numSolutions,samplerType,indVarList):
     else:
         print("Error")
         return None
+
 
 def getSolutionFromSTS(inputFile,numSolutions,indVarList):
     kValue = 50
@@ -154,6 +159,7 @@ def getSolutionFromSTS(inputFile,numSolutions,indVarList):
     os.system(cmd)
     return solList
 
+
 def getSolutionFromQuickSampler(inputFile,numSolutions,indVarList):
     cmd = "./samplers/quicksampler -n "+str(numSolutions*5)+' '+str(inputFile)+' > /dev/null 2>&1'
     os.system(cmd)
@@ -193,6 +199,7 @@ def getSolutionFromQuickSampler(inputFile,numSolutions,indVarList):
         exit(1)
     return solList
 
+
 def getSolutionFromMUSE(inputFile,numSolutions):
     inputFileSuffix = inputFile.split('/')[-1][:-4]
     tempOutputFile = tempfile.gettempdir()+'/'+inputFileSuffix+".out"
@@ -229,8 +236,10 @@ def getSolutionFromMUSE(inputFile,numSolutions):
     return solList
 
 
+
 def getSolutionFromUniform(inputFile,numSolutions):
     return getSolutionFromMUSE(inputFile,numSolutions)
+
 
 #returns list of solList,newVarList,oldVarList
 def findWeightsForVariables(sampleSol,unifSol,numSolutions):
@@ -263,11 +272,14 @@ def findWeightsForVariables(sampleSol,unifSol,numSolutions):
     rExtList.append(oldVarList)
     return rExtList
 
+
 def pushVar(variable,cnfClauses):
     cnfLen = len(cnfClauses)
     for i in range(cnfLen):
         cnfClauses[i].append(variable)
     return cnfClauses
+
+
 def getCNF(variable,binStr,sign,origTotalVars):
     cnfClauses = []
     binLen = len(binStr)
@@ -285,6 +297,7 @@ def getCNF(variable,binStr,sign,origTotalVars):
             cnfClauses = pushVar(newVar,cnfClauses)
     pushVar(variable,cnfClauses)
     return cnfClauses
+
 
 def constructChainFormula(originalVar,solCount,newVars,origTotalVars,invert):
     writeLines=''
@@ -309,6 +322,7 @@ def constructChainFormula(originalVar,solCount,newVars,origTotalVars,invert):
             writeLines += str(CNFClauses[i][j])+' '
         writeLines += '0\n'
     return (writeLines,addedClauseNum)
+
 
 #@returns whether new file was created and the list of independent variables
 def constructNewFile(inputFile,tempFile,sampleSol,unifSol,rExtList,indVarList):
@@ -407,6 +421,7 @@ def constructNewFile(inputFile,tempFile,sampleSol,unifSol,rExtList,indVarList):
     f.close()
     return True,tempIndVarList,oldIndVarList
 
+
 #Returns 1 if uniform and 0 otherwise
 def testUniformity(solList,indVarList,numSolutions,loThresh,hiThresh,outputFile):
     solMap = {}
@@ -441,6 +456,7 @@ def testUniformity(solList,indVarList,numSolutions,loThresh,hiThresh,outputFile)
         return True
     else:
         return False
+
 
 def barbarik():
     parser = argparse.ArgumentParser()
@@ -554,5 +570,7 @@ def barbarik():
                     (totalSolutionsGenerated,totalUniformSamples,experiment))
             f.close()
         breakExperiment = False
+
+
 if __name__ == "__main__":
     barbarik()
