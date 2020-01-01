@@ -443,7 +443,7 @@ def constructNewCNF(inputFile, tempFile, sampleSol, unifSol, rExtList, indVarLis
 
     # no idea what....
     invert = True
-    seenVars = []
+    seenVars = {}
     for oldVarList in rExtList[2]:
         currentNumVar = 0
         for i in range(len(oldVarList)):
@@ -456,11 +456,13 @@ def constructNewCNF(inputFile, tempFile, sampleSol, unifSol, rExtList, indVarLis
                     int(countList[i]), int(newVarList[i]), currentNumVar,
                     invert)
 
-            seenVars.append(int(oldVarList[i]))
+            seenVars[int(oldVarList[i])] = True
             currentNumVar += int(newVarList[i])
             numCls += addedClauseNum
             solClause += addedClause
         invert = not invert
+    del seenVars
+    del invert
 
     # create "c ind ..." lines
     oldIndVarList = [x+sumNewVar for x in indVarList]
