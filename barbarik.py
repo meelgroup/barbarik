@@ -37,6 +37,30 @@ verbose = 0
 
 
 class SolutionRetriver:
+
+    @staticmethod
+    def getSolutionFromSampler(inputFile, numSolutions, samplerType, indVarList):
+        topass = (inputFile, numSolutions, indVarList)
+
+        if (samplerType == SAMPLER_UNIGEN):
+            return SolutionRetriver.getSolutionFromUniGen(*topass)
+
+        if (samplerType == SAMPLER_APPMC3):
+            return SolutionRetriver.getSolutionFromAppMC3(*topass)
+
+        if (samplerType == SAMPLER_QUICKSAMPLER):
+            return SolutionRetriver.getSolutionFromQuickSampler(*topass)
+
+        if (samplerType == SAMPLER_STS):
+            return SolutionRetriver.getSolutionFromSTS(*topass)
+
+        if (samplerType == SAMPLER_CUSTOM):
+            return SolutionRetriver.getSolutionFromCustomSampler(*topass)
+
+        else:
+            print("Error")
+            return None
+
     @staticmethod
     def getSolutionFromUniGen(inputFile, numSolutions, indVarList):
         # must construct ./unigen --samples=500 --verbosity=0 --threads=1  CNF-FILE SAMPLESFILE
@@ -243,29 +267,6 @@ class SolutionRetriver:
         return solreturnList
 
 
-def getSolutionFromSampler(inputFile, numSolutions, samplerType, indVarList):
-    topass = (inputFile, numSolutions, indVarList)
-
-    if (samplerType == SAMPLER_UNIGEN):
-        return SolutionRetriver.getSolutionFromUniGen(*topass)
-
-    if (samplerType == SAMPLER_APPMC3):
-        return SolutionRetriver.getSolutionFromAppMC3(*topass)
-
-    if (samplerType == SAMPLER_QUICKSAMPLER):
-        return SolutionRetriver.getSolutionFromQuickSampler(*topass)
-
-    if (samplerType == SAMPLER_STS):
-        return SolutionRetriver.getSolutionFromSTS(*topass)
-
-    if (samplerType == SAMPLER_CUSTOM):
-        return SolutionRetriver.getSolutionFromCustomSampler(*topass)
-
-    else:
-        print("Error")
-        return None
-
-
 # returns List of Independent Variables
 def parseIndSupport(indSupportFile):
     with open(indSupportFile, 'r') as f:
@@ -293,12 +294,15 @@ def parseIndSupport(indSupportFile):
 def findWeightsForVariables(sampleSol, unifSol, numSolutions):
     countList = [5, 5, 5]
     newVarList = [4, 4, 4]
+
+    # clean up solutions
     sampleSol[0] = sampleSol[0].strip()
     unifSol[0] = unifSol[0].strip()
-    if (sampleSol[0].endswith(' 0')):
+    if sampleSol[0].endswith(' 0'):
         sampleSol[0] = sampleSol[0][:-2]
-    if (unifSol[0].endswith(' 0')):
+    if unifSol[0].endswith(' 0'):
         unifSol[0] = unifSol[0][:-2]
+
     lenSol = len(sampleSol[0].split())
     logSol = math.log(5, 2)*3+1
     for i in range(min(int(math.log(numSolutions, 2))+4, lenSol-3, 5)):
@@ -306,15 +310,18 @@ def findWeightsForVariables(sampleSol, unifSol, numSolutions):
         countList.append(countNum)
         newVarList.append(6)
         logSol += math.log(countNum, 2)
-    rExtList = []
-    oldVarList = []
+
     sampleVarList = random.sample(sampleSol[0].split(), len(countList))
     unifVarList = []
     unifSolMap = unifSol[0].split()
     for i in sampleVarList:
         unifVarList.append(unifSolMap[abs(int(i))-1])
+
+    oldVarList = []
     oldVarList.append(sampleVarList)
     oldVarList.append(unifVarList)
+
+    rExtList = []
     rExtList.append(countList)
     rExtList.append(newVarList)
     rExtList.append(oldVarList)
@@ -475,39 +482,106 @@ def constructNewFile(inputFile, tempFile, sampleSol, unifSol, rExtList, indVarLi
     return True, tempIndVarList, oldIndVarList
 
 
-# Returns 1 if uniform and 0 otherwise
-def testUniformity(solList, indVarList, numSolutions, loThresh, hiThresh):
-    solMap = {}
-    baseMap = {}
-    for sol in solList:
-        solution = ''
-        solFields = sol.split()
-        for entry in solFields:
-            if ((abs(int(entry))) in indVarList):
-                solution += entry+' '
+class Experiment:
+    def __init__(self, inputFile, maxSamples, minSamples, samplerType):
+        inputFileSuffix = inputFile.split('/')[-1][:-4]
+        self.tempFile = tempfile.gettempdir() + "/" + inputFileSuffix+"_t.cnf"
+        self.indVarList = parseIndSupport(inputFile)
+        self.inputFile = inputFile
+        self.samplerType = samplerType
+        self.maxSamples = maxSamples
+        self.minSamples = minSamples
 
-        if (solution in solMap.keys()):
-            solMap[solution] += 1
+        self.samplerString = None
+        if (samplerType == SAMPLER_UNIGEN):
+            self.samplerString = 'UniGen'
+        if (samplerType == SAMPLER_APPMC3):
+            self.samplerString = 'AppMC3'
+        if (samplerType == SAMPLER_QUICKSAMPLER):
+            self.samplerString = 'QuickSampler'
+        if (samplerType == SAMPLER_STS):
+            self.samplerString = 'STS'
+        if (samplerType == SAMPLER_CUSTOM):
+            self.samplerString = 'CustomSampler'
+
+    # Returns 1 if uniform and 0 otherwise
+    def testUniformity(self, solList, indVarList):
+        solMap = {}
+        baseMap = {}
+        for sol in solList:
+            solution = ''
+            solFields = sol.split()
+            for entry in solFields:
+                if ((abs(int(entry))) in indVarList):
+                    solution += entry+' '
+
+            if solution in solMap.keys():
+                solMap[solution] += 1
+            else:
+                solMap[solution] = 1
+
+            if sol not in baseMap.keys():
+                baseMap[sol] = 1
+            else:
+                baseMap[sol] += 1
+
+        if not bool(solMap):
+            print("No Solutions were given to the test")
+            exit(1)
+
+        key = next(iter(solMap))
+
+        print("baseMap: {:<6} numSolutions: {:<6} SolutionsCount: {:<6} loThresh: {:<6} hiThresh: {:<6}".format(
+            len(baseMap.keys()), self.numSolutions, solMap[key], self.loThresh, self.hiThresh))
+
+        if (solMap[key] >= self.loThresh and solMap[key] <= self.hiThresh):
+            return True
         else:
-            solMap[solution] = 1
-        if (sol not in baseMap.keys()):
-            baseMap[sol] = 1
-        else:
-            baseMap[sol] += 1
+            return False
 
-    if (not(bool(solMap))):
-        print("No Solutions were given to the test")
-        exit(1)
+    def one_experiment(self, experiment, j, i):
+        self.thresholdSolutions += self.numSolutions
+        if self.thresholdSolutions < self.minSamples:
+            return None, None
 
-    key = next(iter(solMap))
+        # get sampler's solutions
+        sampleSol = SolutionRetriver.getSolutionFromSampler(
+            self.inputFile, 1, self.samplerType, self.indVarList)
+        self.totalSolutionsGenerated += 1
 
-    print("baseMap: {:<6} numSolutions: {:<6} SolutionsCount: {:<6} loThresh: {:<6} hiThresh: {:<6}".format(
-        len(baseMap.keys()), numSolutions, solMap[key], loThresh, hiThresh))
+        # get uniform sampler's solutions
+        unifSol = SolutionRetriver.getSolutionFromUniform(
+            self.inputFile, 1)
+        self.totalUniformSamples += 1
 
-    if (solMap[key] >= loThresh and solMap[key] <= hiThresh):
-        return True
-    else:
-        return False
+        rExtList = findWeightsForVariables(sampleSol, unifSol, self.numSolutions)
+        shakuniMix, tempIndVarList, oldIndVarList = constructNewFile(
+            self.inputFile, self.tempFile, sampleSol[0], unifSol[0], rExtList, self.indVarList)
+
+        if not shakuniMix:
+            return False, None
+
+        solList = SolutionRetriver.getSolutionFromSampler(
+            self.tempFile, self.numSolutions, self.samplerType, tempIndVarList)
+        os.unlink(self.tempFile)
+
+        self.totalSolutionsGenerated += self.numSolutions
+        isUniform = self.testUniformity(solList, oldIndVarList)
+
+        print("sampler: {:<8s} i: {:<4d} isUniform: {:<4d} TotalSolutionsGenerated: {:<6d}".format(
+            self.samplerString, i, isUniform,
+            self.totalSolutionsGenerated))
+
+        if not isUniform:
+            print("exp:{4} RejectIteration:{0}  Loop:{1} TotalSolutionsGenerated:{2} TotalUniformSamples:{3}".format(
+                i, j, self.totalSolutionsGenerated, self.totalUniformSamples, experiment))
+
+            return True, True
+
+        if self.thresholdSolutions > self.maxSamples:
+            return True, True
+
+        return True, False
 
 
 def barbarik():
@@ -527,7 +601,6 @@ def barbarik():
 
     args = parser.parse_args()
     inputFile = args.input
-    inputFileSuffix = inputFile.split('/')[-1][:-4]
 
     eta = args.eta
     epsilon = args.epsilon
@@ -535,7 +608,6 @@ def barbarik():
     numExperiments = args.exp
     if (numExperiments == -1):
         numExperiments = sys.maxsize
-    samplerType = args.sampler
     searchOrder = args.searchOrder
     verbose = args.verbose
 
@@ -543,29 +615,22 @@ def barbarik():
     random.seed(seed)
     minSamples = args.minSamples
     maxSamples = args.maxSamples
-    samplerString = None
-    if (samplerType == SAMPLER_UNIGEN):
-        samplerString = 'UniGen'
-    if (samplerType == SAMPLER_APPMC3):
-        samplerString = 'AppMC3'
-    if (samplerType == SAMPLER_QUICKSAMPLER):
-        samplerString = 'QuickSampler'
-    if (samplerType == SAMPLER_STS):
-        samplerString = 'STS'
-    if (samplerType == SAMPLER_CUSTOM):
-        samplerString = 'CustomSampler'
 
-    indVarList = parseIndSupport(inputFile)
     totalLoops = int(math.ceil(math.log(2.0/(eta+epsilon), 2))+1)
     listforTraversal = range(totalLoops, 0, -1)
     if searchOrder == 1:
         listforTraversal = range(1, totalLoops+1, 1)
 
+    exp = Experiment(
+        minSamples=minSamples, maxSamples=maxSamples, inputFile=inputFile,
+        samplerType=args.sampler)
+
     for experiment in range(numExperiments):
+        print("Experiment: {:<5} of {:>5}".format(experiment, numExperiments))
         breakExperiment = False
-        totalSolutionsGenerated = 0
-        totalUniformSamples = 0
-        thresholdSolutions = 0
+        exp.totalSolutionsGenerated = 0
+        exp.totalUniformSamples = 0
+        exp.thresholdSolutions = 0
         for j in listforTraversal:
             tj = math.ceil(math.pow(2, j)*(epsilon+eta)/((eta-epsilon)**2)*math.log(4.0/(eta+epsilon), 2)*(4*math.e/(math.e-1)*math.log(1.0/delta)))
             beta = (math.pow(2, j-1)+1)*(eta + epsilon)*1.0/(4+(epsilon+eta)*(math.pow(2, j-1) - 1))
@@ -577,46 +642,26 @@ def barbarik():
             print("tj: {:<6} totalLoops: {:<5} beta: {:<10} epsilon: {:<10}".format(
                 tj, totalLoops, beta, epsilon))
 
-            numSolutions = int(math.ceil(constantFactor*boundFactor))
-            loThresh = int((numSolutions*1.0/2)*(1-(beta+epsilon)/2))
-            hiThresh = int((numSolutions*1.0/2)*(1+(beta+epsilon)/2))
-            print("tj: {:<6} numSolutions: {:<5} loThresh:{:<6} hiThresh: {:<6}".format(
-                tj, numSolutions, loThresh, hiThresh))
+            exp.numSolutions = int(math.ceil(constantFactor*boundFactor))
+            exp.loThresh = int((exp.numSolutions*1.0/2)*(1-(beta+epsilon)/2))
+            exp.hiThresh = int((exp.numSolutions*1.0/2)*(1+(beta+epsilon)/2))
+            print("numSolutions: {:<5} loThresh:{:<6} hiThresh: {:<6}".format(
+                exp.numSolutions, exp.loThresh, exp.hiThresh))
 
-            tempFile = tempfile.gettempdir() + "/" + inputFileSuffix+"_t.cnf"
             i = 0
-            while(i < int(tj)):
+            breakExperiment = False
+            while i < int(tj) and not breakExperiment:
                 i += 1
-                thresholdSolutions += numSolutions
-                if (thresholdSolutions < minSamples):
+                ok, breakExperiment = exp.one_experiment(experiment, j, i)
+
+                if ok is None:
                     continue
-                sampleSol = getSolutionFromSampler(inputFile, 1, samplerType, indVarList)
-                unifSol = SolutionRetriver.getSolutionFromUniform(inputFile, 1)
-                totalUniformSamples += 1
-                totalSolutionsGenerated += 1
-                rExtList = findWeightsForVariables(sampleSol, unifSol, numSolutions)
-                shakuniMix, tempIndVarList, oldIndVarList = constructNewFile(inputFile, tempFile, sampleSol[0], unifSol[0], rExtList, indVarList)
-                if (not(shakuniMix)):
+
+                if not ok:
                     i -= 1
                     continue
-                solList = getSolutionFromSampler(tempFile, numSolutions, samplerType, tempIndVarList)
-                isUniform = testUniformity(solList, oldIndVarList, numSolutions, loThresh, hiThresh)
-                cmd = 'rm '+tempFile
-                os.system(cmd)
-                totalSolutionsGenerated += numSolutions
 
-                print("sampler: {:<8s} i: {:<4d} isUniform: {:<4d} TotalSolutionsGenerated: {:<6d}".format(
-                    samplerString, i, isUniform,
-                    totalSolutionsGenerated))
-
-                if isUniform is False:
-                    print("exp:{4} RejectIteration:{0}  Loop:{1} TotalSolutionsGenerated:{2} TotalUniformSamples:{3}".format(
-                        i, j, totalSolutionsGenerated, totalUniformSamples, experiment))
-
-                    breakExperiment = True
-                    break
-                if (thresholdSolutions > maxSamples):
-                    breakExperiment = True
+                if breakExperiment:
                     break
 
             if breakExperiment:
@@ -624,7 +669,8 @@ def barbarik():
 
         if not breakExperiment:
             print("exp:{2} Accept:1 TotalSolutionsGenerated:{0} TotalUniformSamples:{1}".format(
-                totalSolutionsGenerated, totalUniformSamples, experiment))
+                exp.totalSolutionsGenerated,
+                exp.totalUniformSamples, experiment))
 
         breakExperiment = False
 
