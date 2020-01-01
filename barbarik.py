@@ -138,6 +138,10 @@ class SolutionRetriver:
         return solList
 
     @staticmethod
+    def getSolutionFromUniform(inputFile, numSolutions):
+        return SolutionRetriver.getSolutionFromMUSE(inputFile, numSolutions)
+
+    @staticmethod
     def getSolutionFromMUSE(inputFile, numSolutions):
         inputFileSuffix = inputFile.split('/')[-1][:-4]
         tempOutputFile = tempfile.gettempdir()+'/'+inputFileSuffix+".out"
@@ -221,10 +225,6 @@ class SolutionRetriver:
         os.unlink(outputFile)
         return solList
 
-    @staticmethod
-    def getSolutionFromUniform(inputFile, numSolutions):
-        return getSolutionFromMUSE(inputFile, numSolutions)
-
     # @CHANGE_HERE : please make changes in the below block of code
     ''' this is the method where you could run your sampler for testing
     Arguments : input file, number of solutions to be returned, list of independent variables
@@ -264,9 +264,9 @@ def getSolutionFromSampler(inputFile, numSolutions, samplerType, indVarList):
 
 # returns List of Independent Variables
 def parseIndSupport(indSupportFile):
-    f = open(indSupportFile, 'r')
-    lines = f.readlines()
-    f.close()
+    with open(indSupportFile, 'r') as f:
+        lines = f.readlines()
+
     indList = []
     numVars = 0
     for line in lines:
@@ -327,14 +327,16 @@ def pushVar(variable, cnfClauses):
 def getCNF(variable, binStr, sign, origTotalVars):
     cnfClauses = []
     binLen = len(binStr)
-    if (sign == False):
+    if sign is False:
         cnfClauses.append([-(binLen+1+origTotalVars)])
     else:
         cnfClauses.append([binLen+1+origTotalVars])
+
     for i in range(binLen):
         newVar = int(binLen-i+origTotalVars)
-        if (sign == False):
+        if sign is False:
             newVar = -1*(binLen-i+origTotalVars)
+
         if (binStr[binLen-i-1] == '0'):
             cnfClauses.append([newVar])
         else:
@@ -463,9 +465,9 @@ def constructNewFile(inputFile, tempFile, sampleSol, unifSol, rExtList, indVarLi
     writeStr += solClause
     writeStr += oldClauseStr
 
-    f = open(tempFile, 'w')
-    f.write(writeStr)
-    f.close()
+    with open(tempFile, 'w') as f:
+        f.write(writeStr)
+
     return True, tempIndVarList, oldIndVarList
 
 
@@ -479,7 +481,7 @@ def testUniformity(solList, indVarList, numSolutions, loThresh, hiThresh, output
         for entry in solFields:
             if ((abs(int(entry))) in indVarList):
                 solution += entry+' '
-        #solution = solution[:-1]
+
         if (solution in solMap.keys()):
             solMap[solution] += 1
         else:
@@ -536,12 +538,14 @@ def barbarik():
     f = open(outputFile, 'w')
     f.close()
     seed = args.seed
+    random.seed(seed)
     minSamples = args.minSamples
     maxSamples = args.maxSamples
-    samplerString = ''
-    random.seed(seed)
+    samplerString = None
     if (samplerType == SAMPLER_UNIGEN):
         samplerString = 'UniGen'
+    if (samplerType == SAMPLER_APPMC3):
+        samplerString = 'AppMC3'
     if (samplerType == SAMPLER_QUICKSAMPLER):
         samplerString = 'QuickSampler'
     if (samplerType == SAMPLER_STS):
@@ -554,6 +558,7 @@ def barbarik():
     listforTraversal = range(totalLoops, 0, -1)
     if (searchOrder == 1):
         listforTraversal = range(1, totalLoops+1, 1)
+
     for experiment in range(numExperiments):
         breakExperiment = False
         totalSolutionsGenerated = 0
@@ -583,7 +588,7 @@ def barbarik():
                 if (thresholdSolutions < minSamples):
                     continue
                 sampleSol = getSolutionFromSampler(inputFile, 1, samplerType, indVarList)
-                unifSol = getSolutionFromUniform(inputFile, 1)
+                unifSol = SolutionRetriver.getSolutionFromUniform(inputFile, 1)
                 totalUniformSamples += 1
                 totalSolutionsGenerated += 1
                 rExtList = findWeightsForVariables(sampleSol, unifSol, numSolutions)
