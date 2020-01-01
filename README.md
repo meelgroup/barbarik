@@ -9,14 +9,15 @@ Run:
 git clone --depth 1 https://github.com/meelgroup/barbarik.git
 cp my_favourite_cnf.cnf.gz barbarik/
 cd barbarik
-./barbarik.py --sampler SAMPLER_TYPE
+./barbarik.py --sampler SAMPLER_TYPE blasted_case110.cnf out
 ```
 
 Where  SAMPLER_TYPE takes the following values:
-* UniGen2/ScalMC = 1
+* UniGen2 = 1
 * QuickSampler = 2
 * STS = 3
 * CustomSampler = 4
+* AppMC3 = 5
 
 ### Samplers used
 
