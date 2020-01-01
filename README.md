@@ -1,49 +1,35 @@
-# Barbarik
+# Barbarik, a testing framework for (almost) uniform samplers
 
-Barbarik is a framework developed to test whether a sampler is almost uniform or not. Currently it is implemented for testing QuickSampler, STS, Unigen2/ScalMC. It uses SPUR as the underlying uniform sampler. This work is by Kuldeep Meel and Sourav Chakraborty, as published in [AAAI'19](https://www.comp.nus.edu.sg/~meel/Papers/aaai19-cm.pdf).  
+Barbarik is a framework developed to test whether a sampler is almost uniform or not. It uses SPUR as the underlying uniform sampler. This work is by Kuldeep Meel and Sourav Chakraborty, as published in [AAAI'19](https://www.comp.nus.edu.sg/~meel/Papers/aaai19-cm.pdf).
 
 ## Getting Started
-To get started either download the ZIP file from the repository or git clone it using the following:
+
+Run:
 ```
 git clone https://github.com/meelgroup/barbarik.git
+cp my_favourite_cnf.cnf.gz barbarik/
+cd barbarik
+./barbarik.py --sampler SAMPLER_TYPE
 ```
 
-### Prerequisites
-Please install the following in the same directory as the repository :
-* [SPUR](https://github.com/ZaydH/spur) - Perfectly Uniform Satisfying Assignments
-* Unigen2/ScalMC - almost-uniform SAT sampler
-* [Quick Sampler](https://github.com/RafaelTupynamba/quicksampler)
-* [STS](http://cs.stanford.edu/~ermon/code/STS.zip)
-
-### Installing
-
-After you have installed the above mentioned tools and cloned the repository you are good to go. Inorder to run a custom sampler please make appropriate changes to the code to adjust according to need. To make changes for CustomSampler type look for the following tag in ```barbarik.py``` file:
-```
-# @CHANGE_HERE : please make changes in the below block of code
-```
-
-## Running the tests
-
-In order to run tests please keep your cnf files according to DIMACS format in the same directory as of the file barbarik.py.
-To run use the following command:
-```
-python barbarik.py --sampler SAMPLER_TYPE
-```
-SAMPLER_TYPE takes the following values:
+Where  SAMPLER_TYPE takes the following values:
 * UniGen2/ScalMC = 1
 * QuickSampler = 2
 * STS = 3
 * CustomSampler = 4
 
-Please make appropriate changes to code for CustomSampler
+### Samplers used
 
-## Comparison with SearchTreeSampler
+In the "samplers" directory, you will find 64-bit x86 Linux compiled binaries for:
+* [ApproxMC3-with-sampling](https://github.com/meelgroup/ApproxMC/tree/master-with-sampling) - an almost-uniform sampler, version 3
+* [ApproxMC2-with-sampling](https://bitbucket.org/kuldeepmeel/unigen/) - an almost-uniform sampler, version 2
+* [SPUR](https://github.com/ZaydH/spur) - Perfectly Uniform Satisfying Assignments
+* [Quick Sampler](https://github.com/RafaelTupynamba/quicksampler)
+* [STS](http://cs.stanford.edu/~ermon/code/STS.zip)
 
-For easy comparison we provide a (modified) binary for SearchTreeSampler. [Source](https://github.com/RafaelTupynamba/quicksampler/tree/master/STS).  
+### Custom Samplers
 
-## Comparison with SCALMC
-
-We have added a binary of scalmc in the samplers directory. It implements the UniGen2 algorithm of Chakraborty, Fremont, Meel, Seshia, and Vardi and the ApproxMC3 algorithm of Meel, and Soos. The particular implementation used is based on a prototype by Mate Soos and Kuldeep Meel which is pending publication.
+To run a custom sampler, make appropriate changes to the code -- look for the following tag in `barbarik.py` file: `# @CHANGE_HERE : please make changes in the below block of code`
 
 ## How to Cite
 
@@ -53,5 +39,4 @@ If you use Barbarik, please cite the following paper : [AAAI'19](https://www.com
 1. Kuldeep S. Meel
 2. Shayak Chakraborty 
 3. Yash Pote
-
-If you cannot use any of the available binaries, or experience any other problems, please contact us.
+4. Mate Soos
