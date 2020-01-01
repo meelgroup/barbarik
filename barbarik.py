@@ -375,7 +375,7 @@ def constructChainFormula(originalVar, solCount, newVars, origTotalVars, invert)
 
 
 # returns whether new file was created and the list of TMP+OLD independent variables
-def constructNewFile(inputFile, tempFile, sampleSol, unifSol, rExtList, indVarList):
+def constructNewCNF(inputFile, tempFile, sampleSol, unifSol, rExtList, indVarList):
     # which variables are in pos/neg value in the sample
     sampleMap = {}
     for i in sampleSol.strip().split():
@@ -572,7 +572,7 @@ class Experiment:
         self.totalUniformSamples += 1
 
         rExtList = findWeightsForVariables(sampleSol, unifSol, self.numSolutions)
-        shakuniMix, tempIndVarList, oldIndVarList = constructNewFile(
+        shakuniMix, tempIndVarList, oldIndVarList = constructNewCNF(
             self.inputFile, self.tempFile, sampleSol[0], unifSol[0], rExtList, self.indVarList)
 
         # the two solutions were the same, couldn't construct CNF
