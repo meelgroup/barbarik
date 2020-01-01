@@ -401,6 +401,7 @@ def constructNewFile(inputFile, tempFile, sampleSol, unifSol, rExtList, indVarLi
                 diffIndex = abs(j)
 
     # the two solutions are the same
+    # can't do anything, let's do another experiment
     if diffIndex == -1:
         return False, None, None
 
@@ -408,6 +409,7 @@ def constructNewFile(inputFile, tempFile, sampleSol, unifSol, rExtList, indVarLi
         lines = f.readlines()
 
     # emit the original CNF, but with shifted variables
+    # shift amount is sumNewVar
     countList = rExtList[0]
     newVarList = rExtList[1]
     sumNewVar = int(sum(newVarList))
@@ -434,15 +436,16 @@ def constructNewFile(inputFile, tempFile, sampleSol, unifSol, rExtList, indVarLi
     origNumClause = numCls
 
     # Adding constraints to ensure only two solutions
+    # All variables are set except for the index where they last differ
     solClause = ''
     for i in indVarList:
         if i != diffIndex:
             numCls += 2
-            solClause += str(-(diffIndex+sumNewVar)*sampleMap[diffIndex])
-            solClause += ' ' + str(sampleMap[i]*(i+sumNewVar))+' 0\n'
+            solClause += "%d " % (-(diffIndex+sumNewVar)*sampleMap[diffIndex])
+            solClause += "%d 0\n" % (sampleMap[i]*(i+sumNewVar))
 
-            solClause += str(-(diffIndex+sumNewVar)*unifMap[diffIndex])
-            solClause += ' ' + str(unifMap[i]*(i+sumNewVar))+' 0\n'
+            solClause += "%d " % (-(diffIndex+sumNewVar)*unifMap[diffIndex])
+            solClause += "%d 0\n" % (unifMap[i]*(i+sumNewVar))
 
     # no idea what....
     invert = True
