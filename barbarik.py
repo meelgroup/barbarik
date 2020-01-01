@@ -29,9 +29,237 @@ import tempfile
 from random import shuffle
 
 SAMPLER_UNIGEN = 1
+SAMPLER_APPMC3 = 5
 SAMPLER_QUICKSAMPLER = 2
 SAMPLER_STS = 3
 SAMPLER_CUSTOM = 4
+
+
+class SolutionRetriver:
+    @staticmethod
+    def getSolutionFromUniGen(inputFile, numSolutions, indVarList):
+        # must construct ./unigen --samples=500 --verbosity=0 --threads=1  CNF-FILE SAMPLESFILE
+        inputFileSuffix = inputFile.split('/')[-1][:-4]
+        tempOutputFile = tempfile.gettempdir()+'/'+inputFileSuffix+".txt"
+
+        cmd = './samplers/unigen --samples='+str(numSolutions)
+        cmd += +inputFile + ' ' + str(tempOutputFile) + ' > /dev/null 2>&1'
+        os.system(cmd)
+
+        with open(tempOutputFile, 'r') as f:
+            lines = f.readlines()
+
+        solList = []
+        for line in lines:
+            if (line.strip().startswith('v')):
+                freq = int(line.strip().split(':')[-1])
+                for i in range(freq):
+                    solList.append(line.strip().split(':')[0].replace('v', '').strip())
+                    if (len(solList) == numSolutions):
+                        break
+                if (len(solList) == numSolutions):
+                    break
+        solreturnList = solList
+        if (len(solList) > numSolutions):
+            solreturnList = random.sample(solList, numSolutions)
+
+        os.unlink(str(tempOutputFile))
+        return solreturnList
+
+    @staticmethod
+    def getSolutionFromAppMC3(inputFile, numSolutions, indVarList):
+        # must construct: ./approxmc3 -s 1 -v2 --sampleout /dev/null --samples 500
+        inputFileSuffix = inputFile.split('/')[-1][:-4]
+        tempOutputFile = tempfile.gettempdir()+'/'+inputFileSuffix+".txt"
+
+        cmd = './samplers/approxmc3 -s 1 -v 0 --scalmc 0 --samples '+str(numSolutions)
+        cmd += ' --sampleFile '+str(tempOutputFile)
+        cmd += ' --multisample 1 '+inputFile+' > /dev/null 2>&1'
+        os.system(cmd)
+
+        with open(tempOutputFile, 'r') as f:
+            lines = f.readlines()
+
+        solList = []
+        for line in lines:
+            if (line.strip().startswith('v')):
+                freq = int(line.strip().split(':')[-1])
+                for i in range(freq):
+                    solList.append(line.strip().split(':')[0].replace('v', '').strip())
+                    if (len(solList) == numSolutions):
+                        break
+                if (len(solList) == numSolutions):
+                    break
+        solreturnList = solList
+        if (len(solList) > numSolutions):
+            solreturnList = random.sample(solList, numSolutions)
+
+        os.unlink(str(tempOutputFile))
+        return solreturnList
+
+    @staticmethod
+    def getSolutionFromQuickSampler(inputFile, numSolutions, indVarList):
+        cmd = "./samplers/quicksampler -n "+str(numSolutions*5)+' '+str(inputFile)+' > /dev/null 2>&1'
+        os.system(cmd)
+        cmd = "./samplers/z3 "+str(inputFile)+' > /dev/null 2>&1'
+        os.system(cmd)
+        if (numSolutions > 1):
+            i = 0
+
+        with open(inputFile+'.samples', 'r') as f:
+            lines = f.readlines()
+
+        with open(inputFile+'.samples.valid', 'r') as f:
+            validLines = f.readlines()
+
+        solList = []
+        for j in range(len(lines)):
+            if (validLines[j].strip() == '0'):
+                continue
+            fields = lines[j].strip().split(':')
+            sol = ''
+            i = 0
+            for x in list(fields[1].strip()):
+                if (x == '0'):
+                    sol += ' -'+str(indVarList[i])
+                else:
+                    sol += ' '+str(indVarList[i])
+                i += 1
+            solList.append(sol)
+            if (len(solList) == numSolutions):
+                break
+
+        os.unlink(inputFile+'.samples')
+        os.unlink(inputFile+'.samples.valid')
+
+        if (len(solList) != numSolutions):
+            print("Did not find required number of solutions")
+            exit(1)
+        return solList
+
+    @staticmethod
+    def getSolutionFromMUSE(inputFile, numSolutions):
+        inputFileSuffix = inputFile.split('/')[-1][:-4]
+        tempOutputFile = tempfile.gettempdir()+'/'+inputFileSuffix+".out"
+        cmd = './spur -q -s '+str(numSolutions)+' -out '+str(tempOutputFile)+' -cnf '+str(inputFile)
+        os.system(cmd)
+
+        with open(tempOutputFile, 'r') as f:
+            lines = f.readlines()
+
+        solList = []
+        startParse = False
+        for line in lines:
+            if (line.startswith('#START_SAMPLES')):
+                startParse = True
+                continue
+            if (not(startParse)):
+                continue
+            if (line.startswith('#END_SAMPLES')):
+                startParse = False
+                continue
+            fields = line.strip().split(',')
+            solCount = int(fields[0])
+            sol = ' '
+            i = 1
+            for x in list(fields[1]):
+                if (x == '0'):
+                    sol += ' -'+str(i)
+                else:
+                    sol += ' '+str(i)
+                i += 1
+            for i in range(solCount):
+                solList.append(sol)
+
+        os.unlink(tempOutputFile)
+        return solList
+
+    @staticmethod
+    def getSolutionFromSTS(inputFile, numSolutions, indVarList):
+        kValue = 50
+        samplingRounds = numSolutions/kValue + 1
+        inputFileSuffix = inputFile.split('/')[-1][:-4]
+        outputFile = tempfile.gettempdir()+'/'+inputFileSuffix+".out"
+        cmd = './samplers/STS -k='+str(kValue)+' -nsamples='+str(samplingRounds)+' '+str(inputFile)+' > '+str(outputFile)
+        os.system(cmd)
+        f = open(outputFile, 'r')
+        lines = f.readlines()
+        f.close()
+        solList = []
+        shouldStart = False
+        baseList = {}
+        for j in range(len(lines)):
+            if(lines[j].strip() == 'Outputting samples:' or lines[j].strip() == 'start'):
+                shouldStart = True
+                continue
+            if (lines[j].strip().startswith('Log') or lines[j].strip() == 'end'):
+                shouldStart = False
+            if (shouldStart):
+                i = 0
+
+                if (lines[j].strip() not in baseList):
+                    baseList[lines[j].strip()] = 1
+                else:
+                    baseList[lines[j].strip()] += 1
+                sol = ''
+
+                for x in list(lines[j].strip()):
+                    if (x == '0'):
+                        sol += ' -'+str(indVarList[i])
+                    else:
+                        sol += ' '+str(indVarList[i])
+                    i += 1
+                solList.append(sol)
+                if (len(solList) == numSolutions):
+                    break
+
+        if (len(solList) != numSolutions):
+            print(len(solList))
+            print("STS Did not find required number of solutions")
+            exit(1)
+
+        os.unlink(outputFile)
+        return solList
+
+    @staticmethod
+    def getSolutionFromUniform(inputFile, numSolutions):
+        return getSolutionFromMUSE(inputFile, numSolutions)
+
+    # @CHANGE_HERE : please make changes in the below block of code
+    ''' this is the method where you could run your sampler for testing
+    Arguments : input file, number of solutions to be returned, list of independent variables
+    output : list of solutions '''
+    @staticmethod
+    def getSolutionFromCustomSampler(inputFile, numSolutions, indVarList):
+
+        solreturnList = []
+
+        ''' write your code here '''
+
+        return solreturnList
+
+
+def getSolutionFromSampler(inputFile, numSolutions, samplerType, indVarList):
+    topass = (inputFile, numSolutions, indVarList)
+
+    if (samplerType == SAMPLER_UNIGEN):
+        return SolutionRetriver.getSolutionFromUniGen(*topass)
+
+    if (samplerType == SAMPLER_APPMC3):
+        return SolutionRetriver.getSolutionFromAppMC3(*topass)
+
+    if (samplerType == SAMPLER_QUICKSAMPLER):
+        return SolutionRetriver.getSolutionFromQuickSampler(*topass)
+
+    if (samplerType == SAMPLER_STS):
+        return SolutionRetriver.getSolutionFromSTS(*topass)
+
+    if (samplerType == SAMPLER_CUSTOM):
+        return SolutionRetriver.getSolutionFromCustomSampler(*topass)
+
+    else:
+        print("Error")
+        return None
 
 
 # returns List of Independent Variables
@@ -42,206 +270,19 @@ def parseIndSupport(indSupportFile):
     indList = []
     numVars = 0
     for line in lines:
-        if (line.startswith('p cnf')):
+        if line.startswith('p cnf'):
             fields = line.split()
             numVars = int(fields[2])
-        if (line.startswith('c ind')):
-            indList.extend(line.strip().replace('c ind', '').replace(' 0', '').strip().replace('v ', '').split())
-    if (len(indList) == 0):
+
+        if line.startswith('c ind'):
+            line = line.strip().replace('c ind', '').replace(' 0', '').strip().replace('v ', '')
+            indList.extend(line.split())
+
+    if len(indList) == 0:
         indList = [int(x) for x in range(1, numVars+1)]
     else:
         indList = [int(x) for x in indList]
     return indList
-
-
-def getSolutionFromUniGen(inputFile, numSolutions):
-    inputFileSuffix = inputFile.split('/')[-1][:-4]
-    #tempOutputFile = tempfile.gettempdir()+'/'+inputFileSuffix+"_1.txt"
-    #cmd = 'python ./samplers/UniGen2.py -runIndex=1 -samples='+str(numSolutions)+' '+inputFile+' '+tempfile.gettempdir()+' > /dev/null 2>&1'
-    # print(cmd)
-
-    tempOutputFile = tempfile.gettempdir()+'/'+inputFileSuffix+".txt"
-    cmd = './samplers/scalmc -s 1 -v 0 --scalmc 0 --samples '+str(numSolutions)+' --sampleFile '+str(tempOutputFile)
-    cmd += ' --multisample 1 '+inputFile+' > /dev/null 2>&1'
-    os.system(cmd)
-    f = open(tempOutputFile, 'r')
-    lines = f.readlines()
-    f.close()
-    solList = []
-    for line in lines:
-        if (line.strip().startswith('v')):
-            freq = int(line.strip().split(':')[-1])
-            for i in range(freq):
-                solList.append(line.strip().split(':')[0].replace('v', '').strip())
-                if (len(solList) == numSolutions):
-                    break
-            if (len(solList) == numSolutions):
-                break
-    solreturnList = solList
-    if (len(solList) > numSolutions):
-        solreturnList = random.sample(solList, numSolutions)
-
-    cmd = 'rm '+str(tempOutputFile)
-    os.system(cmd)
-    return solreturnList
-
-
-# @CHANGE_HERE : please make changes in the below block of code
-''' this is the method where you could run your sampler for testing
-Arguments : input file, number of solutions to be returned, list of independent variables
-output : list of solutions '''
-
-
-def getSolutionFromCustomSampler(inputFile, numSolutions, indVarList):
-
-    solreturnList = []
-
-    ''' write your code here '''
-
-    return solreturnList
-
-
-''' END OF BLOCK '''
-
-
-def getSolutionFromSampler(inputFile, numSolutions, samplerType, indVarList):
-    if (samplerType == SAMPLER_UNIGEN):
-        return getSolutionFromUniGen(inputFile, numSolutions)
-    if (samplerType == SAMPLER_QUICKSAMPLER):
-        return getSolutionFromQuickSampler(inputFile, numSolutions, indVarList)
-    if (samplerType == SAMPLER_STS):
-        return getSolutionFromSTS(inputFile, numSolutions, indVarList)
-    if (samplerType == SAMPLER_CUSTOM):
-        return getSolutionFromCustomSampler(inputFile, numSolutions, indVarList)
-    else:
-        print("Error")
-        return None
-
-
-def getSolutionFromSTS(inputFile, numSolutions, indVarList):
-    kValue = 50
-    samplingRounds = numSolutions/kValue + 1
-    inputFileSuffix = inputFile.split('/')[-1][:-4]
-    outputFile = tempfile.gettempdir()+'/'+inputFileSuffix+".out"
-    cmd = './samplers/STS -k='+str(kValue)+' -nsamples='+str(samplingRounds)+' '+str(inputFile)+' > '+str(outputFile)
-    os.system(cmd)
-    f = open(outputFile, 'r')
-    lines = f.readlines()
-    f.close()
-    solList = []
-    shouldStart = False
-    baseList = {}
-    for j in range(len(lines)):
-        if(lines[j].strip() == 'Outputting samples:' or lines[j].strip() == 'start'):
-            shouldStart = True
-            continue
-        if (lines[j].strip().startswith('Log') or lines[j].strip() == 'end'):
-            shouldStart = False
-        if (shouldStart):
-            i = 0
-
-            if (lines[j].strip() not in baseList):
-                baseList[lines[j].strip()] = 1
-            else:
-                baseList[lines[j].strip()] += 1
-            sol = ''
-
-            for x in list(lines[j].strip()):
-                if (x == '0'):
-                    sol += ' -'+str(indVarList[i])
-                else:
-                    sol += ' '+str(indVarList[i])
-                i += 1
-            solList.append(sol)
-            if (len(solList) == numSolutions):
-                break
-    if (len(solList) != numSolutions):
-        print(len(solList))
-        print("STS Did not find required number of solutions")
-        exit(1)
-    cmd = 'rm '+outputFile
-    os.system(cmd)
-    return solList
-
-
-def getSolutionFromQuickSampler(inputFile, numSolutions, indVarList):
-    cmd = "./samplers/quicksampler -n "+str(numSolutions*5)+' '+str(inputFile)+' > /dev/null 2>&1'
-    os.system(cmd)
-    cmd = "./samplers/z3 "+str(inputFile)+' > /dev/null 2>&1'
-    os.system(cmd)
-    if (numSolutions > 1):
-        i = 0
-
-    f = open(inputFile+'.samples', 'r')
-    lines = f.readlines()
-    f.close()
-    f = open(inputFile+'.samples.valid', 'r')
-    validLines = f.readlines()
-    f.close()
-    solList = []
-    for j in range(len(lines)):
-        if (validLines[j].strip() == '0'):
-            continue
-        fields = lines[j].strip().split(':')
-        sol = ''
-        i = 0
-        for x in list(fields[1].strip()):
-            if (x == '0'):
-                sol += ' -'+str(indVarList[i])
-            else:
-                sol += ' '+str(indVarList[i])
-            i += 1
-        solList.append(sol)
-        if (len(solList) == numSolutions):
-            break
-    cmd = 'rm '+inputFile+'.samples'
-    os.system(cmd)
-    cmd = 'rm '+inputFile+'.samples.valid'
-    os.system(cmd)
-    if (len(solList) != numSolutions):
-        print("Did not find required number of solutions")
-        exit(1)
-    return solList
-
-
-def getSolutionFromMUSE(inputFile, numSolutions):
-    inputFileSuffix = inputFile.split('/')[-1][:-4]
-    tempOutputFile = tempfile.gettempdir()+'/'+inputFileSuffix+".out"
-    cmd = './spur -q -s '+str(numSolutions)+' -out '+str(tempOutputFile)+' -cnf '+str(inputFile)
-    os.system(cmd)
-    f = open(tempOutputFile, 'r')
-    lines = f.readlines()
-    f.close()
-    solList = []
-    startParse = False
-    for line in lines:
-        if (line.startswith('#START_SAMPLES')):
-            startParse = True
-            continue
-        if (not(startParse)):
-            continue
-        if (line.startswith('#END_SAMPLES')):
-            startParse = False
-            continue
-        fields = line.strip().split(',')
-        solCount = int(fields[0])
-        sol = ' '
-        i = 1
-        for x in list(fields[1]):
-            if (x == '0'):
-                sol += ' -'+str(i)
-            else:
-                sol += ' '+str(i)
-            i += 1
-        for i in range(solCount):
-            solList.append(sol)
-    cmd = 'rm '+tempOutputFile
-    os.system(cmd)
-    return solList
-
-
-def getSolutionFromUniform(inputFile, numSolutions):
-    return getSolutionFromMUSE(inputFile, numSolutions)
 
 
 # returns list of solList,newVarList,oldVarList
@@ -388,10 +429,13 @@ def constructNewFile(inputFile, tempFile, sampleSol, unifSol, rExtList, indVarLi
         for i in range(len(oldVarList)):
             addedClause = ''
             addedClauseNum = 0
-            if (not(int(oldVarList[i]) in seenVars)):
+            if int(oldVarList[i]) not in seenVars:
                 sign = int(oldVarList[i])/abs(int(oldVarList[i]))
-                (addedClause, addedClauseNum) = constructChainFormula(sign*(abs(int(oldVarList[i]))+sumNewVar),
-                                                                      int(countList[i]), int(newVarList[i]), currentNumVar, invert)
+                (addedClause, addedClauseNum) = constructChainFormula(
+                    sign*(abs(int(oldVarList[i]))+sumNewVar),
+                    int(countList[i]), int(newVarList[i]), currentNumVar,
+                    invert)
+
             seenVars.append(int(oldVarList[i]))
             currentNumVar += int(newVarList[i])
             numClaus += addedClauseNum
@@ -553,8 +597,10 @@ def barbarik():
                 os.system(cmd)
                 totalSolutionsGenerated += numSolutions
                 f = open(outputFile, 'a')
-                f.write("sampler:{0} i:{1} isUniform:{2} TotalSolutionsGenerated:{3}\n".format(samplerString, i, isUniform,
-                                                                                               totalSolutionsGenerated))
+                f.write("sampler:{0} i:{1} isUniform:{2} TotalSolutionsGenerated:{3}\n".format(
+                    samplerString, i, isUniform,
+                    totalSolutionsGenerated))
+
                 f.close()
                 if (isUniform == False):
                     f = open(outputFile, 'a')
