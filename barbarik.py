@@ -381,57 +381,68 @@ def constructChainFormula(originalVar, solCount, newVars, origTotalVars, invert)
     return (writeLines, addedClauseNum)
 
 
-# @returns whether new file was created and the list of independent variables
+# returns whether new file was created and the list of TMP+OLD independent variables
 def constructNewFile(inputFile, tempFile, sampleSol, unifSol, rExtList, indVarList):
+    # which variables are in pos/neg value in the sample
     sampleMap = {}
-    unifMap = {}
-    diffIndex = -1
     for i in sampleSol.strip().split():
-        if (not(abs(int(i)) in indVarList)):
-            continue
-        if (int(i) != 0):
-            sampleMap[abs(int(i))] = int(int(i)/abs(int(i)))
-    for j in unifSol.strip().split():
-        if (int(j) != 0):
-            if (not(abs(int(j)) in indVarList)):
+        if int(i) != 0:
+            if abs(int(i)) not in indVarList:
                 continue
 
-            if (sampleMap[abs(int(j))] != int(j)/abs(int(j))):
-                diffIndex = abs(int(j))
+            sampleMap[abs(int(i))] = int(int(i)/abs(int(i)))
+
+    unifMap = {}
+    diffIndex = -1
+    for j in unifSol.strip().split():
+        if int(j) != 0:
+            if abs(int(j)) not in indVarList:
+                continue
+
             unifMap[abs(int(j))] = int(int(j)/abs(int(j)))
 
-    if (diffIndex == -1):
-        return False, -1, -1
-    solClause = ''
-    f = open(inputFile, 'r')
-    lines = f.readlines()
-    f.close()
+            if sampleMap[abs(int(j))] != int(j)/abs(int(j)):
+                diffIndex = abs(int(j))
+
+    if diffIndex == -1:
+        return False, None, None
+
+    with open(inputFile, 'r') as f:
+        lines = f.readlines()
+
     countList = rExtList[0]
     newVarList = rExtList[1]
     sumNewVar = int(sum(newVarList))
     oldClauseStr = ''
     for line in lines:
-        if (line.strip().startswith('p cnf')):
-            numVar = int(line.strip().split()[2])
-            numClaus = int(line.strip().split()[3])
-        else:
-            if (not(line.strip().startswith('c'))):
-                fields = line.strip().split()
-                for x in list(fields):
-                    if (int(x) == 0):
-                        continue
-                    sign = int(int(x)/abs(int(x)))
+        line = line.strip()
+        if line.startswith('p cnf'):
+            numVar = int(line.split()[2])
+            numCls = int(line.split()[3])
+            continue
 
-                    oldClauseStr += str(sign*(abs(int(x))+sumNewVar))+' '
-                oldClauseStr += ' 0\n'
-    origNumClause = numClaus
+        if line.startswith('c'):
+            # comment
+            continue
+
+        fields = line.split()
+        for x in list(fields):
+            if (int(x) == 0):
+                continue
+            sign = int(int(x)/abs(int(x)))
+
+            oldClauseStr += str(sign*(abs(int(x))+sumNewVar))+' '
+        oldClauseStr += ' 0\n'
+
+    origNumClause = numCls
+
     # Adding constraints to ensure only two clauses
-    indStr = 'c ind '
+    solClause = ''
     indLen = 0
     indIter = 1
     for i in indVarList:
-        if (int(i) != diffIndex):
-            numClaus += 2
+        if int(i) != diffIndex:
+            numCls += 2
             solClause += str(-(diffIndex+sumNewVar)*sampleMap[diffIndex])+' '+str(sampleMap[int(i)]*int(i+sumNewVar))+' 0\n'
             solClause += str(-(diffIndex+sumNewVar)*unifMap[diffIndex])+' '+str(unifMap[int(i)]*int(i+sumNewVar))+' 0\n'
 
@@ -444,34 +455,39 @@ def constructNewFile(inputFile, tempFile, sampleSol, unifSol, rExtList, indVarLi
             addedClauseNum = 0
             if int(oldVarList[i]) not in seenVars:
                 sign = int(oldVarList[i])/abs(int(oldVarList[i]))
-                (addedClause, addedClauseNum) = constructChainFormula(
+                addedClause, addedClauseNum = constructChainFormula(
                     sign*(abs(int(oldVarList[i]))+sumNewVar),
                     int(countList[i]), int(newVarList[i]), currentNumVar,
                     invert)
 
             seenVars.append(int(oldVarList[i]))
             currentNumVar += int(newVarList[i])
-            numClaus += addedClauseNum
+            numCls += addedClauseNum
             solClause += addedClause
-        invert = not(invert)
+        invert = not invert
+
+    # print "c ind ..." lines
     oldIndVarList = [x+sumNewVar for x in indVarList]
     tempIndVarList = copy.copy(oldIndVarList)
+    indStr = 'c ind '
     for i in range(1, currentNumVar+1):
-        if (indIter % 10 == 0):
+        if indIter % 10 == 0:
             indStr += ' 0\nc ind '
+
         indStr += str(i)+' '
         indIter += 1
         tempIndVarList.append(i)
+
     for i in oldIndVarList:
-        if (indIter % 10 == 0):
+        if indIter % 10 == 0:
             indStr += ' 0\nc ind '
+
         indStr += str(i)+' '
         indIter += 1
 
     indStr += ' 0\n'
-    currentNumVar += numVar
 
-    headStr = 'p cnf '+str(currentNumVar)+' '+str(numClaus)+'\n'
+    headStr = 'p cnf '+str(currentNumVar+numVar)+' '+str(numCls)+'\n'
     writeStr = headStr + indStr
     writeStr += solClause
     writeStr += oldClauseStr
@@ -561,11 +577,12 @@ class Experiment:
         if not shakuniMix:
             return False, None
 
+        # get sampler's solutions
         solList = SolutionRetriver.getSolutionFromSampler(
             self.tempFile, self.numSolutions, self.samplerType, tempIndVarList)
         os.unlink(self.tempFile)
-
         self.totalSolutionsGenerated += self.numSolutions
+
         isUniform = self.testUniformity(solList, oldIndVarList)
 
         print("sampler: {:<8s} i: {:<4d} isUniform: {:<4d} TotalSolutionsGenerated: {:<6d}".format(
