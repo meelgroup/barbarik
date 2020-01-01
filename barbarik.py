@@ -386,24 +386,28 @@ def constructNewFile(inputFile, tempFile, sampleSol, unifSol, rExtList, indVarLi
     # which variables are in pos/neg value in the sample
     sampleMap = {}
     for i in sampleSol.strip().split():
-        if int(i) != 0:
-            if abs(int(i)) not in indVarList:
+        i = int(i)
+        if i != 0:
+            if abs(i) not in indVarList:
                 continue
 
-            sampleMap[abs(int(i))] = int(int(i)/abs(int(i)))
+            sampleMap[abs(i)] = int(i/abs(i))
 
+    # which variables are in pos/neg value in the uniform sample
     unifMap = {}
     diffIndex = -1
     for j in unifSol.strip().split():
-        if int(j) != 0:
-            if abs(int(j)) not in indVarList:
+        j = int(j)
+        if j != 0:
+            if abs(j) not in indVarList:
                 continue
 
-            unifMap[abs(int(j))] = int(int(j)/abs(int(j)))
+            unifMap[abs(j)] = int(j/abs(j))
 
-            if sampleMap[abs(int(j))] != int(j)/abs(int(j)):
-                diffIndex = abs(int(j))
+            if sampleMap[abs(j)] != unifMap[abs(j)]:
+                diffIndex = abs(j)
 
+    # the two solutions are the same
     if diffIndex == -1:
         return False, None, None
 
@@ -436,16 +440,18 @@ def constructNewFile(inputFile, tempFile, sampleSol, unifSol, rExtList, indVarLi
 
     origNumClause = numCls
 
-    # Adding constraints to ensure only two clauses
+    # Adding constraints to ensure only two solutions
     solClause = ''
-    indLen = 0
-    indIter = 1
     for i in indVarList:
-        if int(i) != diffIndex:
+        if i != diffIndex:
             numCls += 2
-            solClause += str(-(diffIndex+sumNewVar)*sampleMap[diffIndex])+' '+str(sampleMap[int(i)]*int(i+sumNewVar))+' 0\n'
-            solClause += str(-(diffIndex+sumNewVar)*unifMap[diffIndex])+' '+str(unifMap[int(i)]*int(i+sumNewVar))+' 0\n'
+            solClause += str(-(diffIndex+sumNewVar)*sampleMap[diffIndex])
+            solClause += ' ' + str(sampleMap[i]*(i+sumNewVar))+' 0\n'
 
+            solClause += str(-(diffIndex+sumNewVar)*unifMap[diffIndex])
+            solClause += ' ' + str(unifMap[i]*(i+sumNewVar))+' 0\n'
+
+    # no idea what....
     invert = True
     seenVars = []
     for oldVarList in rExtList[2]:
@@ -466,9 +472,10 @@ def constructNewFile(inputFile, tempFile, sampleSol, unifSol, rExtList, indVarLi
             solClause += addedClause
         invert = not invert
 
-    # print "c ind ..." lines
+    # create "c ind ..." lines
     oldIndVarList = [x+sumNewVar for x in indVarList]
     tempIndVarList = copy.copy(oldIndVarList)
+    indIter = 1
     indStr = 'c ind '
     for i in range(1, currentNumVar+1):
         if indIter % 10 == 0:
@@ -487,13 +494,11 @@ def constructNewFile(inputFile, tempFile, sampleSol, unifSol, rExtList, indVarLi
 
     indStr += ' 0\n'
 
-    headStr = 'p cnf '+str(currentNumVar+numVar)+' '+str(numCls)+'\n'
-    writeStr = headStr + indStr
-    writeStr += solClause
-    writeStr += oldClauseStr
-
     with open(tempFile, 'w') as f:
-        f.write(writeStr)
+        f.write('p cnf %d %d\n' % (currentNumVar+numVar, numCls))
+        f.write(indStr)
+        f.write(solClause)
+        f.write(oldClauseStr)
 
     return True, tempIndVarList, oldIndVarList
 
@@ -574,6 +579,7 @@ class Experiment:
         shakuniMix, tempIndVarList, oldIndVarList = constructNewFile(
             self.inputFile, self.tempFile, sampleSol[0], unifSol[0], rExtList, self.indVarList)
 
+        # the two solutions were the same, couldn't construct CNF
         if not shakuniMix:
             return False, None
 
