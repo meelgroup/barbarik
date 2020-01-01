@@ -407,6 +407,7 @@ def constructNewFile(inputFile, tempFile, sampleSol, unifSol, rExtList, indVarLi
     with open(inputFile, 'r') as f:
         lines = f.readlines()
 
+    # emit the original CNF, but with shifted variables
     countList = rExtList[0]
     newVarList = rExtList[1]
     sumNewVar = int(sum(newVarList))
@@ -422,13 +423,12 @@ def constructNewFile(inputFile, tempFile, sampleSol, unifSol, rExtList, indVarLi
             # comment
             continue
 
-        fields = line.split()
-        for x in list(fields):
-            if (int(x) == 0):
+        for x in line.split():
+            x = int(x)
+            if x == 0:
                 continue
-            sign = int(int(x)/abs(int(x)))
-
-            oldClauseStr += str(sign*(abs(int(x))+sumNewVar))+' '
+            sign = int(x/abs(x))
+            oldClauseStr += "%d " % (sign*(abs(x)+sumNewVar))
         oldClauseStr += ' 0\n'
 
     origNumClause = numCls
