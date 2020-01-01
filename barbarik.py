@@ -501,8 +501,8 @@ def testUniformity(solList, indVarList, numSolutions, loThresh, hiThresh):
 
     key = next(iter(solMap))
 
-    print("baseMap:{4} numSolutions:{3} SolutionsCount:{0} loThresh:{1} hiThresh:{2}".format(
-        solMap[key], loThresh, hiThresh, numSolutions, len(baseMap.keys())))
+    print("baseMap: {:<6} numSolutions: {:<6} SolutionsCount: {:<6} loThresh: {:<6} hiThresh: {:<6}".format(
+        len(baseMap.keys()), numSolutions, solMap[key], loThresh, hiThresh))
 
     if (solMap[key] >= loThresh and solMap[key] <= hiThresh):
         return True
@@ -572,13 +572,16 @@ def barbarik():
             gamma = (beta-epsilon)/4
             constantFactor = math.ceil(1/(9*gamma*gamma))
             boundFactor = math.log((16)*(math.e/(math.e-1))*(1/((eta-epsilon)**2))*math.log(4/(eta+epsilon), 2)*math.log(1/delta), 2)
-            print("constantFactor:{0} boundFactor:{1} logBoundFactor:{2}\ntj:{3} totalLoops:{4} beta:{5} epsilon:{6}".format(
-                constantFactor, boundFactor, math.log(boundFactor, 2), tj, totalLoops, beta, epsilon))
+            print("constantFactor:{:<4} boundFactor: {:<20} logBoundFactor: {:<20}".format(
+                constantFactor, boundFactor, math.log(boundFactor, 2)))
+            print("tj: {:<6} totalLoops: {:<5} beta: {:<10} epsilon: {:<10}".format(
+                tj, totalLoops, beta, epsilon))
 
             numSolutions = int(math.ceil(constantFactor*boundFactor))
             loThresh = int((numSolutions*1.0/2)*(1-(beta+epsilon)/2))
             hiThresh = int((numSolutions*1.0/2)*(1+(beta+epsilon)/2))
-            print("tj:%d numSolutions:%d loThresh:%d hiThresh:%d" % (tj, numSolutions, loThresh, hiThresh))
+            print("tj: {:<6} numSolutions: {:<5} loThresh:{:<6} hiThresh: {:<6}".format(
+                tj, numSolutions, loThresh, hiThresh))
 
             tempFile = tempfile.gettempdir() + "/" + inputFileSuffix+"_t.cnf"
             i = 0
@@ -602,7 +605,7 @@ def barbarik():
                 os.system(cmd)
                 totalSolutionsGenerated += numSolutions
 
-                print("sampler:{0} i:{1} isUniform:{2} TotalSolutionsGenerated:{3}".format(
+                print("sampler: {:<8s} i: {:<4d} isUniform: {:<4d} TotalSolutionsGenerated: {:<6d}".format(
                     samplerString, i, isUniform,
                     totalSolutionsGenerated))
 
