@@ -26,14 +26,12 @@ import random
 import argparse
 import copy
 import tempfile
-from random import shuffle
 
 SAMPLER_UNIGEN = 1
 SAMPLER_APPMC3 = 5
 SAMPLER_QUICKSAMPLER = 2
 SAMPLER_STS = 3
 SAMPLER_CUSTOM = 4
-verbose = 0
 
 
 class SolutionRetriver:
@@ -100,8 +98,7 @@ class SolutionRetriver:
         cmd = './samplers/approxmc3 -s 1 -v 0 --samples ' + str(numSolutions)
         cmd += ' --sampleout ' + str(tempOutputFile)
         cmd += ' ' + inputFile + ' > /dev/null 2>&1'
-        if verbose:
-            print("Calling: '%s'" % cmd)
+        # print("Calling: '%s'" % cmd)
         os.system(cmd)
 
         with open(tempOutputFile, 'r') as f:
@@ -229,7 +226,7 @@ class SolutionRetriver:
             if (shouldStart):
                 i = 0
 
-                if (lines[j].strip() not in baseList):
+                if lines[j].strip() not in baseList:
                     baseList[lines[j].strip()] = 1
                 else:
                     baseList[lines[j].strip()] += 1
@@ -242,10 +239,10 @@ class SolutionRetriver:
                         sol += ' '+str(indVarList[i])
                     i += 1
                 solList.append(sol)
-                if (len(solList) == numSolutions):
+                if len(solList) == numSolutions:
                     break
 
-        if (len(solList) != numSolutions):
+        if len(solList) != numSolutions:
             print(len(solList))
             print("STS Did not find required number of solutions")
             exit(1)
@@ -259,7 +256,6 @@ class SolutionRetriver:
     output : list of solutions '''
     @staticmethod
     def getSolutionFromCustomSampler(inputFile, numSolutions, indVarList):
-
         solreturnList = []
 
         ''' write your code here '''
@@ -359,7 +355,7 @@ def getCNF(variable, binStr, sign, origTotalVars):
 def constructChainFormula(originalVar, solCount, newVars, origTotalVars, invert):
     binStr = str(bin(int(solCount)))[2:-1]
     binLen = len(binStr)
-    for i in range(newVars-binLen-1):
+    for _ in range(newVars-binLen-1):
         binStr = '0'+binStr
 
     firstCNFClauses = getCNF(-int(originalVar), binStr, invert, origTotalVars)
@@ -433,8 +429,6 @@ def constructNewCNF(inputFile, tempFile, sampleSol, unifSol, rExtList, indVarLis
             oldClauseStr += "%d " % (sign*(abs(x)+sumNewVar))
         oldClauseStr += ' 0\n'
 
-    origNumClause = numCls
-
     # Adding constraints to ensure only two solutions
     # All variables are set except for the index where they last differ
     solClause = ''
@@ -476,20 +470,18 @@ def constructNewCNF(inputFile, tempFile, sampleSol, unifSol, rExtList, indVarLis
     for i in range(1, currentNumVar+1):
         if indIter % 10 == 0:
             indStr += ' 0\nc ind '
-
-        indStr += str(i)+' '
+        indStr += "%d " % i
         indIter += 1
         tempIndVarList.append(i)
 
     for i in oldIndVarList:
         if indIter % 10 == 0:
             indStr += ' 0\nc ind '
-
-        indStr += str(i)+' '
+        indStr += "%d " % i
         indIter += 1
-
     indStr += ' 0\n'
 
+    # dump new CNF
     with open(tempFile, 'w') as f:
         f.write('p cnf %d %d\n' % (currentNumVar+numVar, numCls))
         f.write(indStr)
@@ -510,18 +502,18 @@ class Experiment:
         self.minSamples = minSamples
 
         self.samplerString = None
-        if (samplerType == SAMPLER_UNIGEN):
+        if samplerType == SAMPLER_UNIGEN:
             self.samplerString = 'UniGen'
-        if (samplerType == SAMPLER_APPMC3):
+        if samplerType == SAMPLER_APPMC3:
             self.samplerString = 'AppMC3'
-        if (samplerType == SAMPLER_QUICKSAMPLER):
+        if samplerType == SAMPLER_QUICKSAMPLER:
             self.samplerString = 'QuickSampler'
-        if (samplerType == SAMPLER_STS):
+        if samplerType == SAMPLER_STS:
             self.samplerString = 'STS'
-        if (samplerType == SAMPLER_CUSTOM):
+        if samplerType == SAMPLER_CUSTOM:
             self.samplerString = 'CustomSampler'
 
-    # Returns 1 if uniform and 0 otherwise
+    # Returns True if uniform and False otherwise
     def testUniformity(self, solList, indVarList):
         solMap = {}
         baseMap = {}
@@ -529,7 +521,7 @@ class Experiment:
             solution = ''
             solFields = sol.split()
             for entry in solFields:
-                if ((abs(int(entry))) in indVarList):
+                if abs(int(entry)) in indVarList:
                     solution += entry+' '
 
             if solution in solMap.keys():
@@ -551,7 +543,7 @@ class Experiment:
         print("baseMap: {:<6} numSolutions: {:<6} SolutionsCount: {:<6} loThresh: {:<6} hiThresh: {:<6}".format(
             len(baseMap.keys()), self.numSolutions, solMap[key], self.loThresh, self.hiThresh))
 
-        if (solMap[key] >= self.loThresh and solMap[key] <= self.hiThresh):
+        if solMap[key] >= self.loThresh and solMap[key] <= self.hiThresh:
             return True
         else:
             return False
@@ -625,7 +617,7 @@ def barbarik():
     epsilon = args.epsilon
     delta = args.delta
     numExperiments = args.exp
-    if (numExperiments == -1):
+    if numExperiments == -1:
         numExperiments = sys.maxsize
     searchOrder = args.searchOrder
     verbose = args.verbose
