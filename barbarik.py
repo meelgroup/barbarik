@@ -367,8 +367,8 @@ def constructChainFormula(originalVar, solCount, newVars, origTotalVars, invert)
     writeLines = ''
     for cl in firstCNFClauses:
         addedClauseNum += 1
-        for j in range(len(cl)):
-            writeLines += str(cl[j])+' '
+        for lit in cl:
+            writeLines += "%d " % lit
         writeLines += '0\n'
 
     return writeLines, addedClauseNum
