@@ -357,7 +357,6 @@ def getCNF(variable, binStr, sign, origTotalVars):
 
 
 def constructChainFormula(originalVar, solCount, newVars, origTotalVars, invert):
-    writeLines = ''
     binStr = str(bin(int(solCount)))[2:-1]
     binLen = len(binStr)
     for i in range(newVars-binLen-1):
@@ -365,20 +364,25 @@ def constructChainFormula(originalVar, solCount, newVars, origTotalVars, invert)
 
     firstCNFClauses = getCNF(-int(originalVar), binStr, invert, origTotalVars)
     addedClauseNum = 0
-    for i in range(len(firstCNFClauses)):
+    writeLines = ''
+    for cl in firstCNFClauses:
         addedClauseNum += 1
-        for j in range(len(firstCNFClauses[i])):
-            writeLines += str(firstCNFClauses[i][j])+' '
+        for j in range(len(cl)):
+            writeLines += str(cl[j])+' '
         writeLines += '0\n'
+
     CNFClauses = []
-    for i in range(len(CNFClauses)):
-        if (CNFClauses[i] in firstCNFClauses):
+    for cl in CNFClauses:
+        assert False
+        if cl in firstCNFClauses:
             continue
+
         addedClauseNum += 1
-        for j in range(len(CNFClauses[i])):
-            writeLines += str(CNFClauses[i][j])+' '
+        for j in range(len(cl)):
+            writeLines += str(cl[j])+' '
         writeLines += '0\n'
-    return (writeLines, addedClauseNum)
+
+    return writeLines, addedClauseNum
 
 
 # returns whether new file was created and the list of TMP+OLD independent variables
