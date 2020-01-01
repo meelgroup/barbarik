@@ -33,6 +33,7 @@ SAMPLER_APPMC3 = 5
 SAMPLER_QUICKSAMPLER = 2
 SAMPLER_STS = 3
 SAMPLER_CUSTOM = 4
+verbose = 0
 
 
 class SolutionRetriver:
@@ -72,9 +73,11 @@ class SolutionRetriver:
         inputFileSuffix = inputFile.split('/')[-1][:-4]
         tempOutputFile = tempfile.gettempdir()+'/'+inputFileSuffix+".txt"
 
-        cmd = './samplers/approxmc3 -s 1 -v 0 --scalmc 0 --samples '+str(numSolutions)
-        cmd += ' --sampleFile '+str(tempOutputFile)
-        cmd += ' --multisample 1 '+inputFile+' > /dev/null 2>&1'
+        cmd = './samplers/approxmc3 -s 1 -v 0 --samples ' + str(numSolutions)
+        cmd += ' --sampleout ' + str(tempOutputFile)
+        cmd += ' ' + inputFile + ' > /dev/null 2>&1'
+        if verbose:
+            print("Calling: '%s'" % cmd)
         os.system(cmd)
 
         with open(tempOutputFile, 'r') as f:
@@ -82,16 +85,17 @@ class SolutionRetriver:
 
         solList = []
         for line in lines:
-            if (line.strip().startswith('v')):
-                freq = int(line.strip().split(':')[-1])
-                for i in range(freq):
-                    solList.append(line.strip().split(':')[0].replace('v', '').strip())
-                    if (len(solList) == numSolutions):
-                        break
-                if (len(solList) == numSolutions):
+            line = line.strip()
+            freq = int(line.split(':')[0])
+            for i in range(freq):
+                solList.append(line.split(':')[1].strip())
+                if len(solList) == numSolutions:
                     break
+            if len(solList) == numSolutions:
+                break
+
         solreturnList = solList
-        if (len(solList) > numSolutions):
+        if len(solList) > numSolutions:
             solreturnList = random.sample(solList, numSolutions)
 
         os.unlink(str(tempOutputFile))
@@ -472,7 +476,7 @@ def constructNewFile(inputFile, tempFile, sampleSol, unifSol, rExtList, indVarLi
 
 
 # Returns 1 if uniform and 0 otherwise
-def testUniformity(solList, indVarList, numSolutions, loThresh, hiThresh, outputFile):
+def testUniformity(solList, indVarList, numSolutions, loThresh, hiThresh):
     solMap = {}
     baseMap = {}
     for sol in solList:
@@ -497,10 +501,9 @@ def testUniformity(solList, indVarList, numSolutions, loThresh, hiThresh, output
 
     key = next(iter(solMap))
 
-    f = open(outputFile, 'a')
-    f.write("baseMap:{4} numSolutions:{3} SolutionsCount:{0} loThresh:{1} hiThresh:{2}\n".format(
+    print("baseMap:{4} numSolutions:{3} SolutionsCount:{0} loThresh:{1} hiThresh:{2}".format(
         solMap[key], loThresh, hiThresh, numSolutions, len(baseMap.keys())))
-    f.close()
+
     if (solMap[key] >= loThresh and solMap[key] <= hiThresh):
         return True
     else:
@@ -518,9 +521,9 @@ def barbarik():
     parser.add_argument('--minSamples', type=int, default=0, help="min samples", dest='minSamples')
     parser.add_argument('--maxSamples', type=int, default=sys.maxsize, help="max samples", dest='maxSamples')
     parser.add_argument('--seed', type=int, required=True, dest='seed')
+    parser.add_argument('--verb', type=int, dest='verbose')
     parser.add_argument('--exp', type=int, help="number of experiments", dest='exp', default=1)
     parser.add_argument("input", help="input file")
-    parser.add_argument("output", help="output file")
 
     args = parser.parse_args()
     inputFile = args.input
@@ -534,9 +537,8 @@ def barbarik():
         numExperiments = sys.maxsize
     samplerType = args.sampler
     searchOrder = args.searchOrder
-    outputFile = args.output
-    f = open(outputFile, 'w')
-    f.close()
+    verbose = args.verbose
+
     seed = args.seed
     random.seed(seed)
     minSamples = args.minSamples
@@ -556,7 +558,7 @@ def barbarik():
     indVarList = parseIndSupport(inputFile)
     totalLoops = int(math.ceil(math.log(2.0/(eta+epsilon), 2))+1)
     listforTraversal = range(totalLoops, 0, -1)
-    if (searchOrder == 1):
+    if searchOrder == 1:
         listforTraversal = range(1, totalLoops+1, 1)
 
     for experiment in range(numExperiments):
@@ -570,17 +572,15 @@ def barbarik():
             gamma = (beta-epsilon)/4
             constantFactor = math.ceil(1/(9*gamma*gamma))
             boundFactor = math.log((16)*(math.e/(math.e-1))*(1/((eta-epsilon)**2))*math.log(4/(eta+epsilon), 2)*math.log(1/delta), 2)
-            f = open(outputFile, 'a')
-            f.write("constantFactor:{0} boundFactor:{1} logBoundFactor:{2}\ntj:{3} totalLoops:{4} beta:{5} epsilon:{6}\n".format(
+            print("constantFactor:{0} boundFactor:{1} logBoundFactor:{2}\ntj:{3} totalLoops:{4} beta:{5} epsilon:{6}".format(
                 constantFactor, boundFactor, math.log(boundFactor, 2), tj, totalLoops, beta, epsilon))
+
             numSolutions = int(math.ceil(constantFactor*boundFactor))
             loThresh = int((numSolutions*1.0/2)*(1-(beta+epsilon)/2))
             hiThresh = int((numSolutions*1.0/2)*(1+(beta+epsilon)/2))
+            print("tj:%d numSolutions:%d loThresh:%d hiThresh:%d" % (tj, numSolutions, loThresh, hiThresh))
 
-            tempFile = tempfile.gettempdir()+"/"+inputFileSuffix+"_t.cnf"
-
-            f.write("tj:%d numSolutions:%d loThresh:%d hiThresh:%d\n" % (tj, numSolutions, loThresh, hiThresh))
-            f.close()
+            tempFile = tempfile.gettempdir() + "/" + inputFileSuffix+"_t.cnf"
             i = 0
             while(i < int(tj)):
                 i += 1
@@ -597,33 +597,32 @@ def barbarik():
                     i -= 1
                     continue
                 solList = getSolutionFromSampler(tempFile, numSolutions, samplerType, tempIndVarList)
-                isUniform = testUniformity(solList, oldIndVarList, numSolutions, loThresh, hiThresh, outputFile)
+                isUniform = testUniformity(solList, oldIndVarList, numSolutions, loThresh, hiThresh)
                 cmd = 'rm '+tempFile
                 os.system(cmd)
                 totalSolutionsGenerated += numSolutions
-                f = open(outputFile, 'a')
-                f.write("sampler:{0} i:{1} isUniform:{2} TotalSolutionsGenerated:{3}\n".format(
+
+                print("sampler:{0} i:{1} isUniform:{2} TotalSolutionsGenerated:{3}".format(
                     samplerString, i, isUniform,
                     totalSolutionsGenerated))
 
-                f.close()
-                if (isUniform == False):
-                    f = open(outputFile, 'a')
-                    f.write("exp:{4} RejectIteration:{0}  Loop:{1} TotalSolutionsGenerated:{2} TotalUniformSamples:{3}\n"
-                            .format(i, j, totalSolutionsGenerated, totalUniformSamples, experiment))
-                    f.close()
+                if isUniform is False:
+                    print("exp:{4} RejectIteration:{0}  Loop:{1} TotalSolutionsGenerated:{2} TotalUniformSamples:{3}".format(
+                        i, j, totalSolutionsGenerated, totalUniformSamples, experiment))
+
                     breakExperiment = True
                     break
                 if (thresholdSolutions > maxSamples):
                     breakExperiment = True
                     break
-            if (breakExperiment):
+
+            if breakExperiment:
                 break
-        if(not(breakExperiment)):
-            f = open(outputFile, 'a')
-            f.write("exp:{2} Accept:1 TotalSolutionsGenerated:{0} TotalUniformSamples:{1}\n".format
-                    (totalSolutionsGenerated, totalUniformSamples, experiment))
-            f.close()
+
+        if not breakExperiment:
+            print("exp:{2} Accept:1 TotalSolutionsGenerated:{0} TotalUniformSamples:{1}".format(
+                totalSolutionsGenerated, totalUniformSamples, experiment))
+
         breakExperiment = False
 
 
