@@ -34,6 +34,13 @@ SAMPLER_STS = 3
 SAMPLER_CUSTOM = 4
 
 
+class RExtList:
+    def __init__(self, countList, newVarList, oldVarList):
+        self.countList = countList
+        self.newVarList = newVarList
+        self.oldVarList = oldVarList
+
+
 class SolutionRetriver:
 
     @staticmethod
@@ -317,11 +324,7 @@ def findWeightsForVariables(sampleSol, unifSol, numSolutions):
     oldVarList.append(sampleVarList)
     oldVarList.append(unifVarList)
 
-    rExtList = []
-    rExtList.append(countList)
-    rExtList.append(newVarList)
-    rExtList.append(oldVarList)
-    return rExtList
+    return RExtList(countList, newVarList, oldVarList)
 
 
 def pushVar(variable, cnfClauses):
@@ -406,9 +409,7 @@ def constructNewCNF(inputFile, tempFile, sampleSol, unifSol, rExtList, indVarLis
 
     # emit the original CNF, but with shifted variables
     # shift amount is sumNewVar
-    countList = rExtList[0]
-    newVarList = rExtList[1]
-    sumNewVar = int(sum(newVarList))
+    sumNewVar = int(sum(rExtList.newVarList))
     oldClauseStr = ''
     for line in lines:
         line = line.strip()
@@ -445,10 +446,10 @@ def constructNewCNF(inputFile, tempFile, sampleSol, unifSol, rExtList, indVarLis
     # no idea what....
     invert = True
     seenVars = {}
-    for oldVarList in rExtList[2]:
+    for oldVarList in rExtList.oldVarList:
         currentNumVar = 0
         for i in range(len(oldVarList)):
-            newvar = int(newVarList[i])
+            newvar = int(rExtList.newVarList[i])
             oldvar = int(oldVarList[i])
             addedClause = ''
             addedClauseNum = 0
@@ -456,7 +457,7 @@ def constructNewCNF(inputFile, tempFile, sampleSol, unifSol, rExtList, indVarLis
                 sign = int(oldvar/abs(oldvar))
                 addedClause, addedClauseNum = constructChainFormula(
                     sign*(abs(oldvar)+sumNewVar),
-                    int(countList[i]), newvar, currentNumVar,
+                    int(rExtList.countList[i]), newvar, currentNumVar,
                     invert)
 
             seenVars[oldvar] = True
