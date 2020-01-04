@@ -35,10 +35,10 @@ SAMPLER_CUSTOM = 4
 
 
 class RExtList:
-    def __init__(self, countList, newVarList, oldVarList):
+    def __init__(self, countList, newVarList, oldLitLists):
         self.countList = countList
         self.newVarList = newVarList
-        self.oldVarList = oldVarList
+        self.oldLitLists = oldLitLists
 
 
 class SolutionRetriver:
@@ -293,38 +293,44 @@ def parseIndSupport(indSupportFile):
     return indList
 
 
-# returns list of solList,newVarList,oldVarList
 def findWeightsForVariables(sampleSol, unifSol, numSolutions):
     countList = [5, 5, 5]
     newVarList = [4, 4, 4]
 
+    ##########
     # clean up solutions
+    ##########
     sampleSol[0] = sampleSol[0].strip()
-    unifSol[0] = unifSol[0].strip()
     if sampleSol[0].endswith(' 0'):
         sampleSol[0] = sampleSol[0][:-2]
+
+    unifSol[0] = unifSol[0].strip()
     if unifSol[0].endswith(' 0'):
         unifSol[0] = unifSol[0][:-2]
 
     lenSol = len(sampleSol[0].split())
-    logSol = math.log(5, 2)*3+1
+    logSol = math.log(5, 2)*3+1     # this is 7.965784284662087
+
     for i in range(min(int(math.log(numSolutions, 2))+4, lenSol-3, 5)):
         countNum = 31  # random.randint(1,64)
         countList.append(countNum)
         newVarList.append(6)
         logSol += math.log(countNum, 2)
 
-    sampleVarList = random.sample(sampleSol[0].split(), len(countList))
-    unifVarList = []
+    sampleLitList = random.sample(sampleSol[0].split(), len(countList))
+    unifLitList = []
     unifSolMap = unifSol[0].split()
-    for i in sampleVarList:
-        unifVarList.append(unifSolMap[abs(int(i))-1])
+    for lit in sampleLitList:
+        unifLitList.append(unifSolMap[abs(int(lit))-1])
 
-    oldVarList = []
-    oldVarList.append(sampleVarList)
-    oldVarList.append(unifVarList)
+    oldLitLists = []
+    oldLitLists.append(sampleLitList)
+    oldLitLists.append(unifLitList)
 
-    return RExtList(countList, newVarList, oldVarList)
+    #print("countList:", countList)
+    #print("newVarList:", newVarList)
+    #print("oldLitLists:", oldLitLists)
+    return RExtList(countList, newVarList, oldLitLists)
 
 
 def pushVar(variable, cnfClauses):
@@ -355,10 +361,12 @@ def getCNF(variable, binStr, sign, origTotalVars):
     return cnfClauses
 
 
-def constructChainFormula(originalVar, solCount, newVars, origTotalVars, invert):
+def constructChainFormula(originalVar, solCount, newVar, origTotalVars, invert):
+    assert type(solCount) == int
+
     binStr = str(bin(int(solCount)))[2:-1]
     binLen = len(binStr)
-    for _ in range(newVars-binLen-1):
+    for _ in range(newVar-binLen-1):
         binStr = '0'+binStr
 
     firstCNFClauses = getCNF(-int(originalVar), binStr, invert, origTotalVars)
@@ -407,10 +415,11 @@ def constructNewCNF(inputFile, tempFile, sampleSol, unifSol, rExtList, indVarLis
     with open(inputFile, 'r') as f:
         lines = f.readlines()
 
-    # emit the original CNF, but with shifted variables
     # shift amount is sumNewVar
     sumNewVar = int(sum(rExtList.newVarList))
-    oldClauseStr = ''
+
+    # emit the original CNF, but with shifted variables
+    shiftedCNFStr = ''
     for line in lines:
         line = line.strip()
         if line.startswith('p cnf'):
@@ -427,45 +436,50 @@ def constructNewCNF(inputFile, tempFile, sampleSol, unifSol, rExtList, indVarLis
             if x == 0:
                 continue
             sign = int(x/abs(x))
-            oldClauseStr += "%d " % (sign*(abs(x)+sumNewVar))
-        oldClauseStr += ' 0\n'
+            shiftedCNFStr += "%d " % (sign*(abs(x)+sumNewVar))
+        shiftedCNFStr += ' 0\n'
+    del i
 
     # Adding constraints to ensure only two solutions
     # All variables are set except for the index where they last differ
     solClause = ''
-    for i in indVarList:
-        if i != diffIndex:
+    for var in indVarList:
+        if var != diffIndex:
             numCls += 2
             solClause += "%d " % (-(diffIndex+sumNewVar)*sampleMap[diffIndex])
-            solClause += "%d 0\n" % (sampleMap[i]*(i+sumNewVar))
+            solClause += "%d 0\n" % (sampleMap[var]*(var+sumNewVar))
 
             solClause += "%d " % (-(diffIndex+sumNewVar)*unifMap[diffIndex])
-            solClause += "%d 0\n" % (unifMap[i]*(i+sumNewVar))
-    del i
+            solClause += "%d 0\n" % (unifMap[var]*(var+sumNewVar))
 
-    # no idea what....
+    ##########
+    #
+    ##########
     invert = True
-    seenVars = {}
-    for oldVarList in rExtList.oldVarList:
+    seenLits = {}
+
+    # there are only 2 in fact, the one from the sampler under test
+    # and one that's from the uniform sampler. One is inverted one is not.
+    for oldLitList in rExtList.oldLitLists:
         currentNumVar = 0
-        for i in range(len(oldVarList)):
+        for i in range(len(oldLitList)):
             newvar = int(rExtList.newVarList[i])
-            oldvar = int(oldVarList[i])
+            oldlit = int(oldLitList[i])
             addedClause = ''
             addedClauseNum = 0
-            if oldvar not in seenVars:
-                sign = int(oldvar/abs(oldvar))
+            if oldlit not in seenLits:
+                sign = int(oldlit/abs(oldlit))
                 addedClause, addedClauseNum = constructChainFormula(
-                    sign*(abs(oldvar)+sumNewVar),
-                    int(rExtList.countList[i]), newvar, currentNumVar,
+                    sign*(abs(oldlit)+sumNewVar),
+                    rExtList.countList[i], newvar, currentNumVar,
                     invert)
 
-            seenVars[oldvar] = True
+            seenLits[oldlit] = True
             currentNumVar += newvar
             numCls += addedClauseNum
             solClause += addedClause
         invert = not invert
-    del seenVars
+    del seenLits
     del invert
 
     # create "c ind ..." lines
@@ -492,7 +506,11 @@ def constructNewCNF(inputFile, tempFile, sampleSol, unifSol, rExtList, indVarLis
         f.write('p cnf %d %d\n' % (currentNumVar+numVar, numCls))
         f.write(indStr)
         f.write(solClause)
-        f.write(oldClauseStr)
+        #f.write("c -- old CNF below -- \n")
+        f.write(shiftedCNFStr)
+
+    #print("New file: ", tempFile)
+    #exit(0)
 
     return True, tempIndVarList, oldIndVarList
 
