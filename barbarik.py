@@ -44,8 +44,8 @@ class RExtList:
 class SolutionRetriver:
 
     @staticmethod
-    def getSolutionFromSampler(inputFile, numSolutions, samplerType, indVarList):
-        topass = (inputFile, numSolutions, indVarList)
+    def getSolutionFromSampler(inputFile, numSolutions, samplerType, indVarList, newSeed):
+        topass = (inputFile, numSolutions, indVarList, newSeed)
 
         if (samplerType == SAMPLER_UNIGEN):
             return SolutionRetriver.getSolutionFromUniGen(*topass)
@@ -67,7 +67,7 @@ class SolutionRetriver:
             return None
 
     @staticmethod
-    def getSolutionFromUniGen(inputFile, numSolutions, indVarList):
+    def getSolutionFromUniGen(inputFile, numSolutions, indVarList, newSeed):
         # must construct ./unigen --samples=500 --verbosity=0 --threads=1  CNF-FILE SAMPLESFILE
         inputFileSuffix = inputFile.split('/')[-1][:-4]
         tempOutputFile = tempfile.gettempdir()+'/'+inputFileSuffix+".txt"
@@ -97,12 +97,12 @@ class SolutionRetriver:
         return solreturnList
 
     @staticmethod
-    def getSolutionFromAppMC3(inputFile, numSolutions, indVarList):
+    def getSolutionFromAppMC3(inputFile, numSolutions, indVarList, newSeed):
         # must construct: ./approxmc3 -s 1 -v2 --sampleout /dev/null --samples 500
         inputFileSuffix = inputFile.split('/')[-1][:-4]
         tempOutputFile = tempfile.gettempdir()+'/'+inputFileSuffix+".txt"
 
-        cmd = './samplers/approxmc3 -s 1 -v 0 --samples ' + str(numSolutions)
+        cmd = './samplers/approxmc3 -s '+str(newSeed)+' -v 0 --samples ' + str(numSolutions)
         cmd += ' --sampleout ' + str(tempOutputFile)
         cmd += ' ' + inputFile + ' > /dev/null 2>&1'
         # print("Calling: '%s'" % cmd)
@@ -130,7 +130,7 @@ class SolutionRetriver:
         return solreturnList
 
     @staticmethod
-    def getSolutionFromQuickSampler(inputFile, numSolutions, indVarList):
+    def getSolutionFromQuickSampler(inputFile, numSolutions, indVarList, newSeed):
         cmd = "./samplers/quicksampler -n "+str(numSolutions*5)+' '+str(inputFile)+' > /dev/null 2>&1'
         os.system(cmd)
         cmd = "./samplers/z3 "+str(inputFile)+' > /dev/null 2>&1'
@@ -171,10 +171,10 @@ class SolutionRetriver:
 
     @staticmethod
     def getSolutionFromUniform(inputFile, numSolutions):
-        return SolutionRetriver.getSolutionFromMUSE(inputFile, numSolutions)
+        return SolutionRetriver.getSolutionFromSPUR(inputFile, numSolutions)
 
     @staticmethod
-    def getSolutionFromMUSE(inputFile, numSolutions):
+    def getSolutionFromSPUR(inputFile, numSolutions):
         inputFileSuffix = inputFile.split('/')[-1][:-4]
         tempOutputFile = tempfile.gettempdir()+'/'+inputFileSuffix+".out"
         cmd = './spur -q -s '+str(numSolutions)+' -out '+str(tempOutputFile)+' -cnf '+str(inputFile)
@@ -211,7 +211,7 @@ class SolutionRetriver:
         return solList
 
     @staticmethod
-    def getSolutionFromSTS(inputFile, numSolutions, indVarList):
+    def getSolutionFromSTS(inputFile, numSolutions, indVarList, newSeed):
         kValue = 50
         samplingRounds = numSolutions/kValue + 1
         inputFileSuffix = inputFile.split('/')[-1][:-4]
@@ -262,7 +262,7 @@ class SolutionRetriver:
     Arguments : input file, number of solutions to be returned, list of independent variables
     output : list of solutions '''
     @staticmethod
-    def getSolutionFromCustomSampler(inputFile, numSolutions, indVarList):
+    def getSolutionFromCustomSampler(inputFile, numSolutions, indVarList, newSeed):
         solreturnList = []
 
         ''' write your code here '''
@@ -577,9 +577,12 @@ class Experiment:
         if self.thresholdSolutions < self.minSamples:
             return None, None
 
+        # generate a new seed value for every call to the sampler
+        preSeed = random.randint(1,j*1000)
+        newSeed = random.randint(preSeed, i*j*1000)
         # get sampler's solutions
         sampleSol = SolutionRetriver.getSolutionFromSampler(
-            self.inputFile, 1, self.samplerType, self.indVarList)
+            self.inputFile, 1, self.samplerType, self.indVarList, newSeed)
         self.totalSolutionsGenerated += 1
 
         # get uniform sampler's solutions
@@ -595,9 +598,12 @@ class Experiment:
         if not shakuniMix:
             return False, None
 
+        # seed update
+        newSeed = newSeed + 1
+
         # get sampler's solutions
         solList = SolutionRetriver.getSolutionFromSampler(
-            self.tempFile, self.numSolutions, self.samplerType, tempIndVarList)
+            self.tempFile, self.numSolutions, self.samplerType, tempIndVarList, newSeed)
         os.unlink(self.tempFile)
         self.totalSolutionsGenerated += self.numSolutions
 
