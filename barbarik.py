@@ -45,13 +45,14 @@ class SolutionRetriver:
 
     @staticmethod
     def getSolutionFromSampler(inputFile, numSolutions, samplerType, indVarList, newSeed):
-        topass = (inputFile, numSolutions, indVarList, newSeed)
+        topass_withseed = (inputFile, numSolutions, indVarList, newSeed)
+        topass = (inputFile, numSolutions, indVarList)
 
         if (samplerType == SAMPLER_UNIGEN):
             return SolutionRetriver.getSolutionFromUniGen(*topass)
 
         if (samplerType == SAMPLER_APPMC3):
-            return SolutionRetriver.getSolutionFromAppMC3(*topass)
+            return SolutionRetriver.getSolutionFromAppMC3(*topass_withseed)
 
         if (samplerType == SAMPLER_QUICKSAMPLER):
             return SolutionRetriver.getSolutionFromQuickSampler(*topass)
@@ -60,14 +61,14 @@ class SolutionRetriver:
             return SolutionRetriver.getSolutionFromSTS(*topass)
 
         if (samplerType == SAMPLER_CUSTOM):
-            return SolutionRetriver.getSolutionFromCustomSampler(*topass)
+            return SolutionRetriver.getSolutionFromCustomSampler(*topass_withseed)
 
         else:
             print("Error")
             return None
 
     @staticmethod
-    def getSolutionFromUniGen(inputFile, numSolutions, indVarList, newSeed):
+    def getSolutionFromUniGen(inputFile, numSolutions, indVarList):
         # must construct ./unigen --samples=500 --verbosity=0 --threads=1  CNF-FILE SAMPLESFILE
         inputFileSuffix = inputFile.split('/')[-1][:-4]
         tempOutputFile = tempfile.gettempdir()+'/'+inputFileSuffix+".txt"
@@ -130,7 +131,7 @@ class SolutionRetriver:
         return solreturnList
 
     @staticmethod
-    def getSolutionFromQuickSampler(inputFile, numSolutions, indVarList, newSeed):
+    def getSolutionFromQuickSampler(inputFile, numSolutions, indVarList):
         cmd = "./samplers/quicksampler -n "+str(numSolutions*5)+' '+str(inputFile)+' > /dev/null 2>&1'
         os.system(cmd)
         cmd = "./samplers/z3 "+str(inputFile)+' > /dev/null 2>&1'
@@ -211,7 +212,7 @@ class SolutionRetriver:
         return solList
 
     @staticmethod
-    def getSolutionFromSTS(inputFile, numSolutions, indVarList, newSeed):
+    def getSolutionFromSTS(inputFile, numSolutions, indVarList):
         kValue = 50
         samplingRounds = numSolutions/kValue + 1
         inputFileSuffix = inputFile.split('/')[-1][:-4]
@@ -572,14 +573,13 @@ class Experiment:
         else:
             return False
 
-    def one_experiment(self, experiment, j, i):
+    def one_experiment(self, experiment, j, i, numExperiments, tj):
         self.thresholdSolutions += self.numSolutions
         if self.thresholdSolutions < self.minSamples:
             return None, None
 
-        # generate a new seed value for every call to the sampler
-        preSeed = random.randint(1,j*1000)
-        newSeed = random.randint(preSeed, i*j*1000)
+        # generate a new seed value for every different (i,j,experiment)
+        newSeed = numExperiments*(i*tj+j)+experiment
         # get sampler's solutions
         sampleSol = SolutionRetriver.getSolutionFromSampler(
             self.inputFile, 1, self.samplerType, self.indVarList, newSeed)
@@ -693,7 +693,7 @@ def barbarik():
             breakExperiment = False
             while i < int(tj) and not breakExperiment:
                 i += 1
-                ok, breakExperiment = exp.one_experiment(experiment, j, i)
+                ok, breakExperiment = exp.one_experiment(experiment, j, i, numExperiments, tj)
 
                 if ok is None:
                     continue
