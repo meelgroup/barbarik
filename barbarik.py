@@ -44,14 +44,15 @@ class RExtList:
 class SolutionRetriver:
 
     @staticmethod
-    def getSolutionFromSampler(inputFile, numSolutions, samplerType, indVarList):
+    def getSolutionFromSampler(inputFile, numSolutions, samplerType, indVarList, newSeed):
+        topass_withseed = (inputFile, numSolutions, indVarList, newSeed)
         topass = (inputFile, numSolutions, indVarList)
 
         if (samplerType == SAMPLER_UNIGEN):
             return SolutionRetriver.getSolutionFromUniGen(*topass)
 
         if (samplerType == SAMPLER_APPMC3):
-            return SolutionRetriver.getSolutionFromAppMC3(*topass)
+            return SolutionRetriver.getSolutionFromAppMC3(*topass_withseed)
 
         if (samplerType == SAMPLER_QUICKSAMPLER):
             return SolutionRetriver.getSolutionFromQuickSampler(*topass)
@@ -60,7 +61,7 @@ class SolutionRetriver:
             return SolutionRetriver.getSolutionFromSTS(*topass)
 
         if (samplerType == SAMPLER_CUSTOM):
-            return SolutionRetriver.getSolutionFromCustomSampler(*topass)
+            return SolutionRetriver.getSolutionFromCustomSampler(*topass_withseed)
 
         else:
             print("Error")
@@ -97,12 +98,12 @@ class SolutionRetriver:
         return solreturnList
 
     @staticmethod
-    def getSolutionFromAppMC3(inputFile, numSolutions, indVarList):
+    def getSolutionFromAppMC3(inputFile, numSolutions, indVarList, newSeed):
         # must construct: ./approxmc3 -s 1 -v2 --sampleout /dev/null --samples 500
         inputFileSuffix = inputFile.split('/')[-1][:-4]
         tempOutputFile = tempfile.gettempdir()+'/'+inputFileSuffix+".txt"
 
-        cmd = './samplers/approxmc3 -s 1 -v 0 --samples ' + str(numSolutions)
+        cmd = './samplers/approxmc3 -s '+str(newSeed)+' -v 0 --samples ' + str(numSolutions)
         cmd += ' --sampleout ' + str(tempOutputFile)
         cmd += ' ' + inputFile + ' > /dev/null 2>&1'
         # print("Calling: '%s'" % cmd)
@@ -262,7 +263,7 @@ class SolutionRetriver:
     Arguments : input file, number of solutions to be returned, list of independent variables
     output : list of solutions '''
     @staticmethod
-    def getSolutionFromCustomSampler(inputFile, numSolutions, indVarList):
+    def getSolutionFromCustomSampler(inputFile, numSolutions, indVarList, newSeed):
         solreturnList = []
 
         ''' write your code here '''
@@ -572,14 +573,16 @@ class Experiment:
         else:
             return False
 
-    def one_experiment(self, experiment, j, i):
+    def one_experiment(self, experiment, j, i, numExperiments, tj):
         self.thresholdSolutions += self.numSolutions
         if self.thresholdSolutions < self.minSamples:
             return None, None
 
+        # generate a new seed value for every different (i,j,experiment)
+        newSeed = numExperiments*(i*tj+j)+experiment
         # get sampler's solutions
         sampleSol = SolutionRetriver.getSolutionFromSampler(
-            self.inputFile, 1, self.samplerType, self.indVarList)
+            self.inputFile, 1, self.samplerType, self.indVarList, newSeed)
         self.totalSolutionsGenerated += 1
 
         # get uniform sampler's solutions
@@ -595,9 +598,12 @@ class Experiment:
         if not shakuniMix:
             return False, None
 
+        # seed update
+        newSeed = newSeed + 1
+
         # get sampler's solutions
         solList = SolutionRetriver.getSolutionFromSampler(
-            self.tempFile, self.numSolutions, self.samplerType, tempIndVarList)
+            self.tempFile, self.numSolutions, self.samplerType, tempIndVarList, newSeed)
         os.unlink(self.tempFile)
         self.totalSolutionsGenerated += self.numSolutions
 
@@ -687,7 +693,7 @@ def barbarik():
             breakExperiment = False
             while i < int(tj) and not breakExperiment:
                 i += 1
-                ok, breakExperiment = exp.one_experiment(experiment, j, i)
+                ok, breakExperiment = exp.one_experiment(experiment, j, i, numExperiments, tj)
 
                 if ok is None:
                     continue
