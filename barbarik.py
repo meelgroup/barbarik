@@ -74,7 +74,7 @@ class SolutionRetriver:
         tempOutputFile = tempfile.gettempdir()+'/'+inputFileSuffix+".txt"
 
         cmd = './samplers/unigen --samples='+str(numSolutions)
-        cmd += +inputFile + ' ' + str(tempOutputFile) + ' > /dev/null 2>&1'
+        cmd += ' ' + inputFile + ' ' + str(tempOutputFile) + ' > /dev/null 2>&1'
         os.system(cmd)
 
         with open(tempOutputFile, 'r') as f:
