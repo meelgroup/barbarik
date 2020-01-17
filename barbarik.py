@@ -172,10 +172,10 @@ class SolutionRetriver:
 
     @staticmethod
     def getSolutionFromUniform(inputFile, numSolutions):
-        return SolutionRetriver.getSolutionFromMUSE(inputFile, numSolutions)
+        return SolutionRetriver.getSolutionFromSpur(inputFile, numSolutions)
 
     @staticmethod
-    def getSolutionFromMUSE(inputFile, numSolutions):
+    def getSolutionFromSpur(inputFile, numSolutions):
         inputFileSuffix = inputFile.split('/')[-1][:-4]
         tempOutputFile = tempfile.gettempdir()+'/'+inputFileSuffix+".out"
         cmd = './spur -q -s '+str(numSolutions)+' -out '+str(tempOutputFile)+' -cnf '+str(inputFile)
