@@ -103,7 +103,7 @@ class SolutionRetriver:
         inputFileSuffix = inputFile.split('/')[-1][:-4]
         tempOutputFile = tempfile.gettempdir()+'/'+inputFileSuffix+".txt"
 
-        cmd = './samplers/approxmc3 -s '+str(newSeed)+' -v 0 --samples ' + str(numSolutions)
+        cmd = './samplers/approxmc3 -s ' + str(newSeed) + ' -v 0 --samples ' + str(numSolutions)
         cmd += ' --sampleout ' + str(tempOutputFile)
         cmd += ' ' + inputFile + ' > /dev/null 2>&1'
         # print("Calling: '%s'" % cmd)
