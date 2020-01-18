@@ -391,7 +391,7 @@ def constructChainFormula(originalVar, solCount, newVar, origTotalVars, invert):
 
 
 # returns whether new file was created and the list of TMP+OLD independent variables
-def constructNewCNF(inputFile, tempFile, sampleSol, unifSol, chainFormulaSetup, indVarList):
+def constructNewCNF(inputFile, tempFile, sampleSol, unifSol, chainFormulaConf, indVarList):
     # which variables are in pos/neg value in the sample
     sampleVal = {}
     for i in sampleSol.strip().split():
@@ -425,7 +425,7 @@ def constructNewCNF(inputFile, tempFile, sampleSol, unifSol, chainFormulaSetup, 
         lines = f.readlines()
 
     # variables must be shifted by sumNewVar
-    sumNewVar = sum(chainFormulaSetup.newVarList)
+    sumNewVar = sum(chainFormulaConf.newVarList)
 
     # emit the original CNF, but with shifted variables
     shiftedCNFStr = ''
@@ -465,18 +465,18 @@ def constructNewCNF(inputFile, tempFile, sampleSol, unifSol, chainFormulaSetup, 
 
     ##########
     # We add the N number of chain formulas
-    # where chainFormulaSetup.indicatorLits must be of size 2
-    # and len(chainFormulaSetup.indicatorLits) == len(chainFormulaSetup.newVarList)
+    # where chainFormulaConf.indicatorLits must be of size 2
+    # and len(chainFormulaConf.indicatorLits) == len(chainFormulaConf.newVarList)
     # Adding K soluitons over Z variables, where
-    #    Z = chainFormulaSetup.newVarList[k]
-    #    K = chainFormulaSetup.countList[k]
+    #    Z = chainFormulaConf.newVarList[k]
+    #    K = chainFormulaConf.countList[k]
     ##########
     invert = True
     seenLits = {}
-    for indicLits in chainFormulaSetup.indicatorLits:   # loop runs twice
+    for indicLits in chainFormulaConf.indicatorLits:   # loop runs twice
         currentNumVar = 0
         for i in range(len(indicLits)):
-            newvar = chainFormulaSetup.newVarList[i]
+            newvar = chainFormulaConf.newVarList[i]
             indicLit = indicLits[i]
             addedClause = ''
             addedClauseNum = 0
@@ -486,7 +486,7 @@ def constructNewCNF(inputFile, tempFile, sampleSol, unifSol, chainFormulaSetup, 
                 sign = int(indicLit/abs(indicLit))
                 addedClause, addedClauseNum = constructChainFormula(
                     sign*(abs(indicLit)+sumNewVar),
-                    chainFormulaSetup.countList[i], newvar, currentNumVar,
+                    chainFormulaConf.countList[i], newvar, currentNumVar,
                     invert)
 
             seenLits[indicLit] = True
@@ -603,10 +603,10 @@ class Experiment:
         unifSol = SolutionRetriver.getSolutionFromUniform(self.inputFile, 1)
         self.totalUniformSamples += 1
 
-        chainFormulaSetup = chainFormulaSetup(sampleSol, unifSol, self.numSolutions)
+        chainFormulaConf = chainFormulaSetup(sampleSol, unifSol, self.numSolutions)
         shakuniMix, tempIndVarList, oldIndVarList = constructNewCNF(
             self.inputFile, self.tempFile, sampleSol[0], unifSol[0],
-            chainFormulaSetup, self.indVarList)
+            chainFormulaConf, self.indVarList)
 
         # the two solutions were the same, couldn't construct CNF
         if not shakuniMix:
