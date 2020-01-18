@@ -34,11 +34,11 @@ SAMPLER_STS = 3
 SAMPLER_CUSTOM = 4
 
 
-class RExtList:
-    def __init__(self, countList, newVarList, oldLitLists):
+class ChainFormulaSetup:
+    def __init__(self, countList, newVarList, indicatorLits):
         self.countList = countList
         self.newVarList = newVarList
-        self.oldLitLists = oldLitLists
+        self.indicatorLits = indicatorLits
 
 
 class SolutionRetriver:
@@ -294,44 +294,52 @@ def parseIndSupport(indSupportFile):
     return indList
 
 
-def findWeightsForVariables(sampleSol, unifSol, numSolutions):
+def chainFormulaSetup(sampleSol, unifSol, numSolutions):
+    # number of solutions for each: k1, k2, k3
+    # TODO rename to chainSolutions
     countList = [5, 5, 5]
+
+    # chain formula number of variables for each
+    # TODO rename to chainVars
     newVarList = [4, 4, 4]
 
     ##########
-    # clean up solutions
+    # clean up the solutions
     ##########
-    sampleSol[0] = sampleSol[0].strip()
-    if sampleSol[0].endswith(' 0'):
-        sampleSol[0] = sampleSol[0][:-2]
+    sampleSol = sampleSol.strip()
+    if sampleSol.endswith(' 0'):
+        sampleSol = sampleSol[:-2]
+    unifSol = unifSol.strip()
+    if unifSol.endswith(' 0'):
+        unifSol = unifSol[:-2]
 
-    unifSol[0] = unifSol[0].strip()
-    if unifSol[0].endswith(' 0'):
-        unifSol[0] = unifSol[0][:-2]
-
-    lenSol = len(sampleSol[0].split())
-    logSol = math.log(5, 2)*3+1     # this is 7.965784284662087
-
+    # adding more chain formulas (at most 8 in total: 3 + 5)
+    # these chain formulas will have 31 solutions over 6 variables
+    lenSol = len(sampleSol.split())
     for i in range(min(int(math.log(numSolutions, 2))+4, lenSol-3, 5)):
-        countNum = 31  # random.randint(1,64)
-        countList.append(countNum)
+        countList.append(31)
         newVarList.append(6)
-        logSol += math.log(countNum, 2)
+    assert len(countList) == len(newVarList)
 
-    sampleLitList = random.sample(sampleSol[0].split(), len(countList))
+    # picking selector literals, i.e. k1, k2, k3, randomly
+    sampleLitList = random.sample(sampleSol.split(), len(countList))
     unifLitList = []
-    unifSolMap = unifSol[0].split()
+    unifSolMap = unifSol.split()
     for lit in sampleLitList:
         unifLitList.append(unifSolMap[abs(int(lit))-1])
 
-    oldLitLists = []
-    oldLitLists.append(sampleLitList)
-    oldLitLists.append(unifLitList)
+    assert len(unifLitList) == len(sampleLitList)
+    for a, b in zip(unifLitList, sampleLitList):
+        assert abs(a) == abs(b)
+
+    indicatorLits = []
+    indicatorLits.append(sampleLitList)
+    indicatorLits.append(unifLitList)
 
     #print("countList:", countList)
     #print("newVarList:", newVarList)
-    #print("oldLitLists:", oldLitLists)
-    return RExtList(countList, newVarList, oldLitLists)
+    #print("indicatorLits:", indicatorLits)
+    return ChainFormulaSetup(countList, newVarList, indicatorLits)
 
 
 def pushVar(variable, cnfClauses):
@@ -383,19 +391,19 @@ def constructChainFormula(originalVar, solCount, newVar, origTotalVars, invert):
 
 
 # returns whether new file was created and the list of TMP+OLD independent variables
-def constructNewCNF(inputFile, tempFile, sampleSol, unifSol, rExtList, indVarList):
+def constructNewCNF(inputFile, tempFile, sampleSol, unifSol, chainFormulaSetup, indVarList):
     # which variables are in pos/neg value in the sample
-    sampleMap = {}
+    sampleVal = {}
     for i in sampleSol.strip().split():
         i = int(i)
         if i != 0:
             if abs(i) not in indVarList:
                 continue
 
-            sampleMap[abs(i)] = int(i/abs(i))
+            sampleVal[abs(i)] = int(i/abs(i))
 
     # which variables are in pos/neg value in the uniform sample
-    unifMap = {}
+    unifVal = {}
     diffIndex = -1
     for j in unifSol.strip().split():
         j = int(j)
@@ -403,9 +411,9 @@ def constructNewCNF(inputFile, tempFile, sampleSol, unifSol, rExtList, indVarLis
             if abs(j) not in indVarList:
                 continue
 
-            unifMap[abs(j)] = int(j/abs(j))
+            unifVal[abs(j)] = int(j/abs(j))
 
-            if sampleMap[abs(j)] != unifMap[abs(j)]:
+            if sampleVal[abs(j)] != unifVal[abs(j)]:
                 diffIndex = abs(j)
 
     # the two solutions are the same
@@ -416,8 +424,8 @@ def constructNewCNF(inputFile, tempFile, sampleSol, unifSol, rExtList, indVarLis
     with open(inputFile, 'r') as f:
         lines = f.readlines()
 
-    # shift amount is sumNewVar
-    sumNewVar = int(sum(rExtList.newVarList))
+    # variables must be shifted by sumNewVar
+    sumNewVar = sum(chainFormulaSetup.newVarList)
 
     # emit the original CNF, but with shifted variables
     shiftedCNFStr = ''
@@ -441,41 +449,47 @@ def constructNewCNF(inputFile, tempFile, sampleSol, unifSol, rExtList, indVarLis
         shiftedCNFStr += ' 0\n'
     del i
 
-    # Adding constraints to ensure only two solutions
+    # Fixing the solution based on splittingVar
+    # X = sigma1 OR X = singma2
     # All variables are set except for the index where they last differ
     solClause = ''
+    splittingVar = diffIndex+sumNewVar
     for var in indVarList:
         if var != diffIndex:
             numCls += 2
-            solClause += "%d " % (-(diffIndex+sumNewVar)*sampleMap[diffIndex])
-            solClause += "%d 0\n" % (sampleMap[var]*(var+sumNewVar))
+            solClause += "%d " % (-splittingVar*sampleVal[diffIndex])
+            solClause += "%d 0\n" % (sampleVal[var]*(var+sumNewVar))
 
-            solClause += "%d " % (-(diffIndex+sumNewVar)*unifMap[diffIndex])
-            solClause += "%d 0\n" % (unifMap[var]*(var+sumNewVar))
+            solClause += "%d " % (-splittingVar*unifVal[diffIndex])
+            solClause += "%d 0\n" % (unifVal[var]*(var+sumNewVar))
 
     ##########
-    #
+    # We add the N number of chain formulas
+    # where chainFormulaSetup.indicatorLits must be of size 2
+    # and len(chainFormulaSetup.indicatorLits) == len(chainFormulaSetup.newVarList)
+    # Adding K soluitons over Z variables, where
+    #    Z = chainFormulaSetup.newVarList[k]
+    #    K = chainFormulaSetup.countList[k]
     ##########
     invert = True
     seenLits = {}
-
-    # there are only 2 in fact, the one from the sampler under test
-    # and one that's from the uniform sampler. One is inverted one is not.
-    for oldLitList in rExtList.oldLitLists:
+    for indicLits in chainFormulaSetup.indicatorLits:   # loop runs twice
         currentNumVar = 0
-        for i in range(len(oldLitList)):
-            newvar = int(rExtList.newVarList[i])
-            oldlit = int(oldLitList[i])
+        for i in range(len(indicLits)):
+            newvar = chainFormulaSetup.newVarList[i]
+            indicLit = indicLits[i]
             addedClause = ''
             addedClauseNum = 0
-            if oldlit not in seenLits:
-                sign = int(oldlit/abs(oldlit))
+
+            # not adding the chain formula twice to the same literal
+            if indicLit not in seenLits:
+                sign = int(indicLit/abs(indicLit))
                 addedClause, addedClauseNum = constructChainFormula(
-                    sign*(abs(oldlit)+sumNewVar),
-                    rExtList.countList[i], newvar, currentNumVar,
+                    sign*(abs(indicLit)+sumNewVar),
+                    chainFormulaSetup.countList[i], newvar, currentNumVar,
                     invert)
 
-            seenLits[oldlit] = True
+            seenLits[indicLit] = True
             currentNumVar += newvar
             numCls += addedClauseNum
             solClause += addedClause
@@ -586,13 +600,13 @@ class Experiment:
         self.totalSolutionsGenerated += 1
 
         # get uniform sampler's solutions
-        unifSol = SolutionRetriver.getSolutionFromUniform(
-            self.inputFile, 1)
+        unifSol = SolutionRetriver.getSolutionFromUniform(self.inputFile, 1)
         self.totalUniformSamples += 1
 
-        rExtList = findWeightsForVariables(sampleSol, unifSol, self.numSolutions)
+        chainFormulaSetup = chainFormulaSetup(sampleSol, unifSol, self.numSolutions)
         shakuniMix, tempIndVarList, oldIndVarList = constructNewCNF(
-            self.inputFile, self.tempFile, sampleSol[0], unifSol[0], rExtList, self.indVarList)
+            self.inputFile, self.tempFile, sampleSol[0], unifSol[0],
+            chainFormulaSetup, self.indVarList)
 
         # the two solutions were the same, couldn't construct CNF
         if not shakuniMix:
