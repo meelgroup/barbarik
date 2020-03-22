@@ -109,8 +109,8 @@ class SolutionRetriver:
         cmd = './samplers/approxmc3 -s ' + str(newSeed) + ' -v 0 --samples ' + str(numSolutions)
         cmd += ' --sampleout ' + str(tempOutputFile)
         cmd += ' ' + inputFile + ' > /dev/null 2>&1'
-        # print("Calling: '%s'" % cmd)
         os.system(cmd)
+        print("Executing :" , cmd)
 
         with open(tempOutputFile, 'r') as f:
             lines = f.readlines()
@@ -135,10 +135,14 @@ class SolutionRetriver:
 
     @staticmethod
     def getSolutionFromQuickSampler(inputFile, numSolutions, indVarList):
+        print("WARNING: you MUST have z3 installed for this sampler!!")
         cmd = "./samplers/quicksampler -n "+str(numSolutions*5)+' '+str(inputFile)+' > /dev/null 2>&1'
         os.system(cmd)
-        cmd = "./samplers/z3 "+str(inputFile)+' > /dev/null 2>&1'
+        print("Executing :" , cmd)
+        cmd = "z3 sat.quicksampler_check=true sat.quicksampler_check.timeout=3600.0 "+str(inputFile)+' > /dev/null 2>&1'
         os.system(cmd)
+        print("Executing :" , cmd)
+
         if (numSolutions > 1):
             i = 0
 
@@ -183,6 +187,7 @@ class SolutionRetriver:
         tempOutputFile = tempfile.gettempdir()+'/'+inputFileSuffix+".out"
         cmd = './spur -q -s '+str(numSolutions)+' -out '+str(tempOutputFile)+' -cnf '+str(inputFile)
         os.system(cmd)
+        print("Executing :" , cmd)
 
         with open(tempOutputFile, 'r') as f:
             lines = f.readlines()
@@ -222,9 +227,12 @@ class SolutionRetriver:
         outputFile = tempfile.gettempdir()+'/'+inputFileSuffix+".out"
         cmd = './samplers/STS -k='+str(kValue)+' -nsamples='+str(samplingRounds)+' '+str(inputFile)+' > '+str(outputFile)
         os.system(cmd)
+        print("Executing :" , cmd)
+
         f = open(outputFile, 'r')
         lines = f.readlines()
         f.close()
+
         solList = []
         shouldStart = False
         baseList = {}
