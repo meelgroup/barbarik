@@ -49,23 +49,26 @@ class SolutionRetriver:
         topass = (inputFile, numSolutions, indVarList)
 
         if (samplerType == SAMPLER_UNIGEN):
-            return SolutionRetriver.getSolutionFromUniGen(*topass)
+            toret = SolutionRetriver.getSolutionFromUniGen(*topass)
 
-        if (samplerType == SAMPLER_APPMC3):
-            return SolutionRetriver.getSolutionFromAppMC3(*topass_withseed)
+        elif (samplerType == SAMPLER_APPMC3):
+            toret = SolutionRetriver.getSolutionFromAppMC3(*topass_withseed)
 
-        if (samplerType == SAMPLER_QUICKSAMPLER):
-            return SolutionRetriver.getSolutionFromQuickSampler(*topass)
+        elif (samplerType == SAMPLER_QUICKSAMPLER):
+            toret = SolutionRetriver.getSolutionFromQuickSampler(*topass)
 
-        if (samplerType == SAMPLER_STS):
-            return SolutionRetriver.getSolutionFromSTS(*topass)
+        elif (samplerType == SAMPLER_STS):
+            toret = SolutionRetriver.getSolutionFromSTS(*topass)
 
-        if (samplerType == SAMPLER_CUSTOM):
-            return SolutionRetriver.getSolutionFromCustomSampler(*topass_withseed)
+        elif (samplerType == SAMPLER_CUSTOM):
+            toret = SolutionRetriver.getSolutionFromCustomSampler(*topass_withseed)
 
         else:
             print("Error")
             return None
+
+        print("Solution list:", toret)
+        return toret
 
     @staticmethod
     def getSolutionFromUniGen(inputFile, numSolutions, indVarList):
