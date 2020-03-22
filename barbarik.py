@@ -258,6 +258,7 @@ class SolutionRetriver:
                     else:
                         sol += ' '+str(indVarList[i])
                     i += 1
+                sol += " 0"
                 solList.append(sol)
                 if len(solList) == numSolutions:
                     break
