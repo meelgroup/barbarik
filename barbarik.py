@@ -85,10 +85,11 @@ class SolutionRetriver:
 
         solList = []
         for line in lines:
-            if (line.strip().startswith('v')):
+            if line.strip().startswith('v'):
                 freq = int(line.strip().split(':')[-1])
                 for i in range(freq):
-                    solList.append(line.strip().split(':')[0].replace('v', '').strip())
+                    sol = line.strip().split(':')[0].replace('v', '').strip()
+                    solList.append(sol)
                     if (len(solList) == numSolutions):
                         break
                 if (len(solList) == numSolutions):
