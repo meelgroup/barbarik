@@ -23,7 +23,7 @@ Where  SAMPLER_TYPE takes the following values:
 
 In the "samplers" directory, you will find 64-bit x86 Linux compiled binaries for:
 * [ApproxMC3-with-sampling](https://github.com/meelgroup/ApproxMC/tree/master-with-sampling) - an almost-uniform sampler, version 3
-* [ApproxMC2-with-sampling](https://bitbucket.org/kuldeepmeel/unigen/) - an almost-uniform sampler, version 2
+* [UniGen2](https://bitbucket.org/kuldeepmeel/unigen/) - an almost-uniform sampler, version 2
 * [SPUR](https://github.com/ZaydH/spur) - Perfectly Uniform Satisfying Assignments
 * [Quick Sampler](https://github.com/RafaelTupynamba/quicksampler)
 * [STS](http://cs.stanford.edu/~ermon/code/STS.zip)
