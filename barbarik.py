@@ -706,7 +706,7 @@ class Experiment:
             return None, None
 
         # generate a new seed value for every different (i,j,experiment)
-        newSeed = numExperiments*(i*tj+j)+experiment
+        newSeed = int(numExperiments*(i*tj+j)+experiment)
         # get sampler's solutions
         sampleSol = SolutionRetriver.getSolutionFromSampler(
             self.inputFile, 1, self.samplerType, self.indVarList, newSeed)
