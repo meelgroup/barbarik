@@ -789,7 +789,7 @@ if __name__ == "__main__":
     minSamples = args.minSamples
     maxSamples = args.maxSamples
 
-    totalLoops = int(math.ceil(math.log(2.0/(eta+epsilon), 2))+1)
+    totalLoops = int(math.ceil(math.log(2.0/(eta+2*epsilon), 2))+1)
     listforTraversal = range(totalLoops, 0, -1)
     if searchOrder == 1:
         listforTraversal = range(1, totalLoops+1, 1)
@@ -805,19 +805,19 @@ if __name__ == "__main__":
         exp.totalUniformSamples = 0
         exp.thresholdSolutions = 0
         for j in listforTraversal:
-            tj = math.ceil(math.pow(2, j)*(epsilon+eta)/((eta-epsilon)**2)*math.log(4.0/(eta+epsilon), 2)*(4*math.e/(math.e-1)*math.log(1.0/delta)))
-            beta = (math.pow(2, j-1)+1)*(eta + epsilon)*1.0/(4+(epsilon+eta)*(math.pow(2, j-1) - 1))
-            gamma = (beta-epsilon)/4
-            constantFactor = math.ceil(1/(9*gamma*gamma))
-            boundFactor = math.log((16)*(math.e/(math.e-1))*(1/((eta-epsilon)**2))*math.log(4/(eta+epsilon), 2)*math.log(1/delta), 2)
+            tj = math.ceil(math.pow(2, j)*(2*epsilon+eta)/((eta-2*epsilon)**2)*math.log(4.0/(eta+2*epsilon), 2)*(4*math.e/(math.e-1)*math.log(1.0/delta)))
+            beta = (math.pow(2, j-1)+1)*(eta + 2*epsilon)*1.0/(4+(2*epsilon+eta)*(math.pow(2, j-1) - 1))
+            gamma = (beta-2*epsilon)/4
+            constantFactor = math.ceil(1/(8.79*gamma*gamma))
+            boundFactor = math.log((16)*(math.e/(math.e-1))*(1/(delta*(eta-2*epsilon)**2))*math.log(4/(eta+2*epsilon), 2)*math.log(1/delta), 2)
             print("constantFactor:{:<4} boundFactor: {:<20} logBoundFactor: {:<20}".format(
                 constantFactor, boundFactor, math.log(boundFactor, 2)))
             print("tj: {:<6} totalLoops: {:<5} beta: {:<10} epsilon: {:<10}".format(
                 tj, totalLoops, beta, epsilon))
 
             exp.numSolutions = int(math.ceil(constantFactor*boundFactor))
-            exp.loThresh = int((exp.numSolutions*1.0/2)*(1-(beta+epsilon)/2))
-            exp.hiThresh = int((exp.numSolutions*1.0/2)*(1+(beta+epsilon)/2))
+            exp.loThresh = int((exp.numSolutions*1.0/2)*(1-(beta+2*epsilon)/2))
+            exp.hiThresh = int((exp.numSolutions*1.0/2)*(1+(beta+2*epsilon)/2))
             print("numSolutions: {:<5} loThresh:{:<6} hiThresh: {:<6}".format(
                 exp.numSolutions, exp.loThresh, exp.hiThresh))
 
