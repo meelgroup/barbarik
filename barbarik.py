@@ -757,7 +757,7 @@ class Experiment:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--eta', type=float, help="default = 0.9", default=0.9, dest='eta')
-    parser.add_argument('--epsilon', type=float, help="default = 0.6", default=0.6, dest='epsilon')
+    parser.add_argument('--epsilon', type=float, help="default = 0.3", default=0.3, dest='epsilon')
     parser.add_argument('--delta', type=float, help="default = 0.05", default=0.05, dest='delta')
     parser.add_argument('--sampler', type=int, help=str(SAMPLER_UNIGEN)+" for UniGen;\n" +
                         str(SAMPLER_QUICKSAMPLER)+" for QuickSampler;\n"+str(SAMPLER_STS)+" for STS;\n", default=SAMPLER_STS, dest='sampler')
@@ -774,6 +774,9 @@ if __name__ == "__main__":
 
     eta = args.eta
     epsilon = args.epsilon
+    if (eta < 2*epsilon):
+        print("Eta needs to be at least two times epsilon")
+        exit(1)
     delta = args.delta
     numExperiments = args.exp
     if numExperiments == -1:
