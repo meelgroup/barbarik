@@ -786,7 +786,7 @@ if __name__ == "__main__":
     minSamples = args.minSamples
     maxSamples = args.maxSamples
 
-    totalLoops = int(math.ceil(math.log(2.0/(eta+epsilon), 2))+1)
+    totalLoops = int(math.ceil(math.log(2.0/(eta+2*epsilon), 2))+1)
     listforTraversal = range(totalLoops, 0, -1)
     if searchOrder == 1:
         listforTraversal = range(1, totalLoops+1, 1)
