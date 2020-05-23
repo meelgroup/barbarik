@@ -22,7 +22,7 @@ Where  SAMPLER_TYPE takes the following values:
 ### Samplers used
 
 In the "samplers" directory, you will find 64-bit x86 Linux compiled binaries for:
-* [ApproxMC3-with-sampling](https://github.com/meelgroup/ApproxMC/tree/master-with-sampling) - an almost-uniform sampler, version 3
+* [ApproxMC3-with-sampling](https://github.com/meelgroup/ApproxMC/tree/master-with-sampling) - an almost-uniform sampler (This is a beta version of UniGen3 -- which will be released soon. If you use ApproxMC3 binary, please cite UniGen paper to avoid any confusion.)
 * [UniGen2](https://bitbucket.org/kuldeepmeel/unigen/) - an almost-uniform sampler, version 2
 * [SPUR](https://github.com/ZaydH/spur) - Perfectly Uniform Satisfying Assignments
 * [Quick Sampler](https://github.com/RafaelTupynamba/quicksampler)
@@ -38,6 +38,8 @@ If you use Barbarik, please cite the following paper : [AAAI'19](https://www.com
 
 ## Contributors
 1. Kuldeep S. Meel
-2. Shayak Chakraborty 
-3. Yash Pote
-4. Mate Soos
+2. Sourav Chakraborty
+3. Shayak Chakraborty 
+4. Yash Pote
+5. Mate Soos
+5. Priyanka Golia
