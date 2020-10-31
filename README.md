@@ -4,17 +4,18 @@ Barbarik is a framework developed to test whether a sampler is almost uniform or
 
 ## Getting Started
 
-Run:
+To test QuckSampler:
 ```
 git clone --depth 1 https://github.com/meelgroup/barbarik.git
-cp my_favourite_cnf.cnf.gz barbarik/
 cd barbarik
-./barbarik.py --seed 1 --sampler SAMPLER_TYPE blasted_case110.cnf
+./barbarik.py --seed 1 --sampler 2 blasted_case110.cnf
 ```
+
+See `./barbarik.py --help` for the different samplers supported.
 
 ### Samplers used
 
-For `SAMPLER_TYPE`, you can choose any of the samplers in the "samplers" directory, see `--help`:
+You can choose any of the samplers in the "samplers" directory, see `--help`:
 * [UniGen2](https://bitbucket.org/kuldeepmeel/unigen/) - an almost-uniform sampler, version 2
 * [ApproxMC3-with-sampling](https://github.com/meelgroup/ApproxMC/tree/master-with-sampling) - an almost-uniform sampler (This is a beta version of UniGen3 -- which will be released soon. If you use ApproxMC3 binary, please cite UniGen paper to avoid any confusion.)
 * [SPUR](https://github.com/ZaydH/spur) - Perfectly Uniform Satisfying Assignments
