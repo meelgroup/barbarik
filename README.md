@@ -12,18 +12,11 @@ cd barbarik
 ./barbarik.py --seed 1 --sampler SAMPLER_TYPE blasted_case110.cnf
 ```
 
-Where  SAMPLER_TYPE takes the following values:
-* UniGen2 = 1
-* QuickSampler = 2
-* STS = 3
-* CustomSampler = 4
-* AppMC3 = 5
-
 ### Samplers used
 
-In the "samplers" directory, you will find 64-bit x86 Linux compiled binaries for:
-* [ApproxMC3-with-sampling](https://github.com/meelgroup/ApproxMC/tree/master-with-sampling) - an almost-uniform sampler (This is a beta version of UniGen3 -- which will be released soon. If you use ApproxMC3 binary, please cite UniGen paper to avoid any confusion.)
+For `SAMPLER_TYPE`, you can choose any of the samplers in the "samplers" directory, see `--help`:
 * [UniGen2](https://bitbucket.org/kuldeepmeel/unigen/) - an almost-uniform sampler, version 2
+* [ApproxMC3-with-sampling](https://github.com/meelgroup/ApproxMC/tree/master-with-sampling) - an almost-uniform sampler (This is a beta version of UniGen3 -- which will be released soon. If you use ApproxMC3 binary, please cite UniGen paper to avoid any confusion.)
 * [SPUR](https://github.com/ZaydH/spur) - Perfectly Uniform Satisfying Assignments
 * [Quick Sampler](https://github.com/RafaelTupynamba/quicksampler)
 * [STS](http://cs.stanford.edu/~ermon/code/STS.zip)
