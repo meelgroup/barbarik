@@ -755,12 +755,19 @@ class Experiment:
 
 
 if __name__ == "__main__":
+
+    samplers =
+        str(SAMPLER_UNIGEN) + " for UniGen\n" +
+        str(SAMPLER_QUICKSAMPLER) + " for QuickSampler\n"+
+        str(SAMPLER_STS)+ " for STS\n"+
+        str(SAMPLER_SPUR) + " for SPUR\n" +
+        str(SAMPLER_CMS) + " for CMS\n"
+
     parser = argparse.ArgumentParser()
+    parser.add_argument('--sampler', type=int, help=samplers, default=SAMPLER_STS, dest='sampler')
     parser.add_argument('--eta', type=float, help="default = 0.9", default=0.9, dest='eta')
     parser.add_argument('--epsilon', type=float, help="default = 0.3", default=0.3, dest='epsilon')
     parser.add_argument('--delta', type=float, help="default = 0.05", default=0.05, dest='delta')
-    parser.add_argument('--sampler', type=int, help=str(SAMPLER_UNIGEN)+" for UniGen;\n" +
-                        str(SAMPLER_QUICKSAMPLER)+" for QuickSampler;\n"+str(SAMPLER_STS)+" for STS;\n", default=SAMPLER_STS, dest='sampler')
     parser.add_argument('--reverse', type=int, default=0, help="order to search in", dest='searchOrder')
     parser.add_argument('--minSamples', type=int, default=0, help="min samples", dest='minSamples')
     parser.add_argument('--maxSamples', type=int, default=sys.maxsize, help="max samples", dest='maxSamples')
