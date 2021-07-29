@@ -756,12 +756,11 @@ class Experiment:
 
 if __name__ == "__main__":
 
-    samplers =
-        str(SAMPLER_UNIGEN) + " for UniGen\n" +
-        str(SAMPLER_QUICKSAMPLER) + " for QuickSampler\n"+
-        str(SAMPLER_STS)+ " for STS\n"+
-        str(SAMPLER_SPUR) + " for SPUR\n" +
-        str(SAMPLER_CMS) + " for CMS\n"
+    samplers = str(SAMPLER_UNIGEN) + " for UniGen\n"
+    samplers += str(SAMPLER_QUICKSAMPLER) + " for QuickSampler\n"
+    samplers += str(SAMPLER_STS)+ " for STS\n"
+    samplers += str(SAMPLER_SPUR) + " for SPUR\n"
+    samplers += str(SAMPLER_CMS) + " for CMS\n"
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--sampler', type=int, help=samplers, default=SAMPLER_STS, dest='sampler')
@@ -834,11 +833,7 @@ if __name__ == "__main__":
                 i += 1
                 ok, breakExperiment = exp.one_experiment(experiment, j, i, numExperiments, tj)
 
-                if ok is None:
-                    continue
-
-                if not ok:
-                    i -= 1
+                if ok is not True:
                     continue
 
                 if breakExperiment:
