@@ -171,10 +171,7 @@ class SolutionRetriver:
                 freq = int(line.split(':')[-1])
                 for i in range(freq):
                     solList.append(line.split(':')[0].replace('v', '').strip())
-                    if (len(solList) == numSolutions):
-                        break
-                if (len(solList) == numSolutions):
-                    break
+
         solreturnList = solList
         if (len(solList) > numSolutions):
             solreturnList = random.sample(solList, numSolutions)
@@ -204,10 +201,6 @@ class SolutionRetriver:
             freq = int(line.split(':')[0])
             for i in range(freq):
                 solList.append(line.split(':')[1].strip())
-                if len(solList) == numSolutions:
-                    break
-            if len(solList) == numSolutions:
-                break
 
         solreturnList = solList
         if len(solList) > numSolutions:
@@ -239,26 +232,32 @@ class SolutionRetriver:
             if (validLines[j].strip() == '0'):
                 continue
             fields = lines[j].strip().split(':')
-            sol = ''
-            i = 0
+
             # valutions are 0 and 1 and in the same order as c ind.
-            for x in list(fields[1].strip()):
-                if (x == '0'):
-                    sol += ' -'+str(indVarList[i])
-                else:
-                    sol += ' '+str(indVarList[i])
-                i += 1
-            solList.append(sol)
-            if (len(solList) == numSolutions):
-                break
+            freq = int(fields[0])
+            for k in range(freq):
+                sol = ''
+                i = 0
+                for x in list(fields[1].strip()):
+                    if (x == '0'):
+                        sol += ' -'+str(indVarList[i])
+                    else:
+                        sol += ' '+str(indVarList[i])
+                    i += 1
+                solList.append(sol)
+
+        solreturnList = solList
+        if len(solList) > numSolutions:
+            solreturnList = random.sample(solList, numSolutions)
 
         os.unlink(inputFile+'.samples')
         os.unlink(inputFile+'.samples.valid')
 
-        if len(solList) != numSolutions:
+        if len(solreturnList) != numSolutions:
             print("Did not find required number of solutions")
             sys.exit(1)
-        return solList
+
+        return solreturnList
 
     @staticmethod
     def getSolutionFromSpur(inputFile, numSolutions, indVarList, newSeed):
