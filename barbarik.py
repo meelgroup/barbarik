@@ -232,19 +232,16 @@ class SolutionRetriver:
             if (validLines[j].strip() == '0'):
                 continue
             fields = lines[j].strip().split(':')
-
+            sol = ''
+            i = 0
             # valutions are 0 and 1 and in the same order as c ind.
-            freq = int(fields[0])
-            for k in range(freq):
-                sol = ''
-                i = 0
-                for x in list(fields[1].strip()):
-                    if (x == '0'):
-                        sol += ' -'+str(indVarList[i])
-                    else:
-                        sol += ' '+str(indVarList[i])
-                    i += 1
-                solList.append(sol)
+            for x in list(fields[1].strip()):
+                if (x == '0'):
+                    sol += ' -'+str(indVarList[i])
+                else:
+                    sol += ' '+str(indVarList[i])
+                i += 1
+            solList.append(sol)
 
         solreturnList = solList
         if len(solList) > numSolutions:
