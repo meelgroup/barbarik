@@ -650,14 +650,13 @@ def constructNewCNF(inputFile, tempFile, sampleSol, unifSol, chainFormulaConf, i
 
 
 class Experiment:
-    def __init__(self, inputFile, maxSamples, minSamples, samplerType):
+    def __init__(self, inputFile, maxSamples, samplerType):
         inputFileSuffix = inputFile.split('/')[-1][:-4]
         self.tempFile = tempfile.gettempdir() + "/" + inputFileSuffix+"_t.cnf"
         self.indVarList = parseIndSupport(inputFile)
         self.inputFile = inputFile
         self.samplerType = samplerType
         self.maxSamples = maxSamples
-        self.minSamples = minSamples
 
         self.samplerString = get_sampler_string(samplerType)
 
@@ -698,8 +697,6 @@ class Experiment:
 
     def one_experiment(self, experiment, j, i, numExperiments, tj):
         self.thresholdSolutions += self.numSolutions
-        if self.thresholdSolutions < self.minSamples:
-            return None, None
 
         # generate a new seed value for every different (i,j,experiment)
         newSeed = int(numExperiments*(i*tj+j)+experiment)
@@ -721,7 +718,7 @@ class Experiment:
 
         # the two solutions were the same, couldn't construct CNF
         if not shakuniMix:
-            return False, None
+            return False
 
         # seed update
         newSeed = newSeed + 1
@@ -742,12 +739,12 @@ class Experiment:
             print("exp:{4} RejectIteration:{0}  Loop:{1} TotalSolutionsGenerated:{2} TotalUniformSamples:{3}".format(
                 i, j, self.totalSolutionsGenerated, self.totalUniformSamples, experiment))
 
-            return True, True
+            return True
 
         if self.thresholdSolutions > self.maxSamples:
-            return True, True
+            return True
 
-        return True, False
+        return False
 
 
 if __name__ == "__main__":
@@ -764,7 +761,6 @@ if __name__ == "__main__":
     parser.add_argument('--epsilon', type=float, help="default = 0.3", default=0.3, dest='epsilon')
     parser.add_argument('--delta', type=float, help="default = 0.05", default=0.05, dest='delta')
     parser.add_argument('--reverse', type=int, default=0, help="order to search in", dest='searchOrder')
-    parser.add_argument('--minSamples', type=int, default=0, help="min samples", dest='minSamples')
     parser.add_argument('--maxSamples', type=int, default=sys.maxsize, help="max samples", dest='maxSamples')
     parser.add_argument('--seed', type=int, required=True, dest='seed')
     parser.add_argument('--verb', type=int, dest='verbose')
@@ -788,7 +784,6 @@ if __name__ == "__main__":
 
     seed = args.seed
     random.seed(seed)
-    minSamples = args.minSamples
     maxSamples = args.maxSamples
 
     totalLoops = int(math.ceil(math.log(2.0/(eta+2*epsilon), 2))+1)
@@ -796,8 +791,7 @@ if __name__ == "__main__":
     if searchOrder == 1:
         listforTraversal = range(1, totalLoops+1, 1)
 
-    exp = Experiment(
-        minSamples=minSamples, maxSamples=maxSamples, inputFile=inputFile,
+    exp = Experiment(maxSamples=maxSamples, inputFile=inputFile,
         samplerType=args.sampler)
 
     for experiment in range(numExperiments):
@@ -827,10 +821,7 @@ if __name__ == "__main__":
             breakExperiment = False
             while i < int(tj) and not breakExperiment:
                 i += 1
-                ok, breakExperiment = exp.one_experiment(experiment, j, i, numExperiments, tj)
-
-                if ok is not True:
-                    continue
+                breakExperiment = exp.one_experiment(experiment, j, i, numExperiments, tj)
 
                 if breakExperiment:
                     break
