@@ -171,10 +171,7 @@ class SolutionRetriver:
                 freq = int(line.split(':')[-1])
                 for i in range(freq):
                     solList.append(line.split(':')[0].replace('v', '').strip())
-                    if (len(solList) == numSolutions):
-                        break
-                if (len(solList) == numSolutions):
-                    break
+
         solreturnList = solList
         if (len(solList) > numSolutions):
             solreturnList = random.sample(solList, numSolutions)
@@ -204,10 +201,6 @@ class SolutionRetriver:
             freq = int(line.split(':')[0])
             for i in range(freq):
                 solList.append(line.split(':')[1].strip())
-                if len(solList) == numSolutions:
-                    break
-            if len(solList) == numSolutions:
-                break
 
         solreturnList = solList
         if len(solList) > numSolutions:
@@ -249,16 +242,19 @@ class SolutionRetriver:
                     sol += ' '+str(indVarList[i])
                 i += 1
             solList.append(sol)
-            if (len(solList) == numSolutions):
-                break
+
+        solreturnList = solList
+        if len(solList) > numSolutions:
+            solreturnList = random.sample(solList, numSolutions)
 
         os.unlink(inputFile+'.samples')
         os.unlink(inputFile+'.samples.valid')
 
-        if len(solList) != numSolutions:
+        if len(solreturnList) != numSolutions:
             print("Did not find required number of solutions")
             sys.exit(1)
-        return solList
+
+        return solreturnList
 
     @staticmethod
     def getSolutionFromSpur(inputFile, numSolutions, indVarList, newSeed):
@@ -756,12 +752,11 @@ class Experiment:
 
 if __name__ == "__main__":
 
-    samplers =
-        str(SAMPLER_UNIGEN) + " for UniGen\n" +
-        str(SAMPLER_QUICKSAMPLER) + " for QuickSampler\n"+
-        str(SAMPLER_STS)+ " for STS\n"+
-        str(SAMPLER_SPUR) + " for SPUR\n" +
-        str(SAMPLER_CMS) + " for CMS\n"
+    samplers = str(SAMPLER_UNIGEN) + " for UniGen\n"
+    samplers += str(SAMPLER_QUICKSAMPLER) + " for QuickSampler\n"
+    samplers += str(SAMPLER_STS)+ " for STS\n"
+    samplers += str(SAMPLER_SPUR) + " for SPUR\n"
+    samplers += str(SAMPLER_CMS) + " for CMS\n"
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--sampler', type=int, help=samplers, default=SAMPLER_STS, dest='sampler')
@@ -834,11 +829,7 @@ if __name__ == "__main__":
                 i += 1
                 ok, breakExperiment = exp.one_experiment(experiment, j, i, numExperiments, tj)
 
-                if ok is None:
-                    continue
-
-                if not ok:
-                    i -= 1
+                if ok is not True:
                     continue
 
                 if breakExperiment:
