@@ -340,10 +340,12 @@ class SolutionRetriver:
                 if len(solList) == numSolutions:
                     break
 
-        if len(solList) != numSolutions:
+        if len(solList) < numSolutions:
             print(len(solList))
             print("STS Did not find required number of solutions")
             sys.exit(1)
+        elif len(solList) > numSolutions:
+            solList = random.sample(solList, numSolutions)
 
         os.unlink(outputFile)
         return solList
