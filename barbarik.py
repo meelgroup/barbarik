@@ -320,13 +320,6 @@ class SolutionRetriver:
             if (lines[j].strip().startswith('Log') or lines[j].strip() == 'end'):
                 shouldStart = False
             if (shouldStart):
-
-
-                '''if lines[j].strip() not in baseList:
-                    baseList[lines[j].strip()] = 1
-                else:
-                    baseList[lines[j].strip()] += 1'''
-                sol = ''
                 i = 0
                 # valutions are 0 and 1 and in the same order as c ind.
                 for x in list(lines[j].strip()):
