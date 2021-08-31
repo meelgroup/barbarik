@@ -610,7 +610,7 @@ def constructNewCNF(inputFile, tempFile, sampleSol, unifSol, chainFormulaConf, i
 
     # create "c ind ..." lines
     oldIndVarList = [x+sumNewVar for x in indVarList]
-    tempIndVarList = copy.copy(oldIndVarList)
+    tempIndVarList = []
     indIter = 1
     indStr = 'c ind '
     for i in range(1, currentNumVar+1):
@@ -625,6 +625,7 @@ def constructNewCNF(inputFile, tempFile, sampleSol, unifSol, chainFormulaConf, i
             indStr += ' 0\nc ind '
         indStr += "%d " % i
         indIter += 1
+        tempIndVarList.append(i)
     indStr += ' 0\n'
 
     # dump new CNF
