@@ -313,7 +313,6 @@ class SolutionRetriver:
 
         solList = []
         shouldStart = False
-        #baseList = {}
         for j in range(len(lines)):
             if(lines[j].strip() == 'Outputting samples:' or lines[j].strip() == 'start'):
                 shouldStart = True
