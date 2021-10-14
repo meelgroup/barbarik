@@ -321,6 +321,7 @@ class SolutionRetriver:
                 shouldStart = False
             if (shouldStart):
                 i = 0
+                sol = ''
                 # valutions are 0 and 1 and in the same order as c ind.
                 for x in list(lines[j].strip()):
                     if (x == '0'):
