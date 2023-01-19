@@ -13,7 +13,7 @@ cd barbarik
 python3 barbarik.py --seed 1 --sampler 2 blasted_case110.cnf
 ```
 
-See `./barbarik.py --help` for the different samplers supported.
+See `python3 barbarik.py --help` for the different samplers supported.
 
 ### Samplers used
 
