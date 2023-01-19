@@ -1,6 +1,8 @@
-# Barbarik, a testing framework for (almost) uniform samplers
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Barbarik is a framework developed to test whether a sampler is almost uniform or not. It uses SPUR as the underlying uniform sampler. This work is by Sourav Chakraborty and Kuldeep S. Meel, as published in [AAAI'19](https://www.comp.nus.edu.sg/~meel/Papers/aaai19-cm.pdf).
+# Barbarik, a testing framework for samplers
+
+'Barbarik' is a framework developed to test whether a sampler samples from a target distribution. To read more about Barbarik, have a look at our papers [AAAI'19](https://www.comp.nus.edu.sg/~meel/Papers/aaai19-cm.pdf), [NeurIPS'20](https://arxiv.org/abs/2010.12918), and [NeurIPS'22](https://www.comp.nus.edu.sg/~meel/Papers/neurips22.pdf).
 
 ## Getting Started
 
@@ -8,7 +10,7 @@ To test QuickSampler:
 ```
 git clone --depth 1 https://github.com/meelgroup/barbarik.git
 cd barbarik
-./barbarik.py --seed 1 --sampler 2 blasted_case110.cnf
+python3 barbarik.py --seed 1 --sampler 2 blasted_case110.cnf
 ```
 
 See `./barbarik.py --help` for the different samplers supported.
@@ -28,7 +30,7 @@ To run a custom sampler, make appropriate changes to the code -- look for the fo
 
 ## How to Cite
 
-If you use Barbarik, please cite the following paper : [AAAI'19](https://www.comp.nus.edu.sg/~meel/Papers/aaai19-cm.pdf). Here is [BIB file](https://www.comp.nus.edu.sg/~meel/bib/CM19.bib)
+If you use Barbarik, please cite the following papers : [AAAI'19](https://www.comp.nus.edu.sg/~meel/publications/CM19.bib), [NeurIPS'20](https://www.comp.nus.edu.sg/~meel/publications/MPC20.bib), and [NeurIPS'22](https://www.comp.nus.edu.sg/~meel/publications/PM22.bib).
 
 ## Contributors
 1. Kuldeep S. Meel
