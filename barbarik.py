@@ -24,7 +24,6 @@ import os
 import math
 import random
 import argparse
-import copy
 import tempfile
 
 from interfaces.cnf import *
@@ -459,10 +458,9 @@ if __name__ == "__main__":
         print("numSolutions: {:<5} loThresh:{:<6} hiThresh: {:<6}".format(
             exp.numSolutions, exp.loThresh, exp.hiThresh))
 
-        i = 0
         breakExperiment = False
-        while i < int(tj) and not breakExperiment:
-            i += 1
+
+        for i in range(int(tj)):
             breakExperiment = exp.one_experiment(j, i, tj)
 
             if breakExperiment:
