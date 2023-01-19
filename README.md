@@ -4,7 +4,7 @@ Barbarik is a framework developed to test whether a sampler is almost uniform or
 
 ## Getting Started
 
-To test QuckSampler:
+To test QuickSampler:
 ```
 git clone --depth 1 https://github.com/meelgroup/barbarik.git
 cd barbarik
