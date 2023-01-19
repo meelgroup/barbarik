@@ -343,17 +343,16 @@ class Experiment:
         else:
             return False
 
-    def one_experiment(self, experiment, j, i, numExperiments, tj):
+    def one_experiment(self, j, i, tj):
         self.thresholdSolutions += self.numSolutions
 
         # generate a new seed value for every different (i,j,experiment)
-        newSeed = int(numExperiments*(i*tj+j)+experiment)
+        newSeed = int(i*tj+j)
         # get sampler's solutions
         sampleSol = SolutionRetriever.getSolutionFromSampler(
             self.inputFile, 1, self.samplerType, self.indVarList, verbosity, newSeed)
         self.totalSolutionsGenerated += 1
 
-        # get uniform sampler's solutions
         # get uniform sampler's solutions
         unifSol = SolutionRetriever.getSolutionFromSampler(
             self.inputFile, 1, SAMPLER_SPUR, self.indVarList, verbosity, newSeed)
@@ -384,8 +383,8 @@ class Experiment:
             self.totalSolutionsGenerated))
 
         if not isUniform:
-            print("exp:{4} RejectIteration:{0}  Loop:{1} TotalSolutionsGenerated:{2} TotalUniformSamples:{3}".format(
-                i, j, self.totalSolutionsGenerated, self.totalUniformSamples, experiment))
+            print("RejectIteration:{0}  Loop:{1} TotalSolutionsGenerated:{2} TotalUniformSamples:{3}".format(
+                i, j, self.totalSolutionsGenerated, self.totalUniformSamples))
 
             return True
 
@@ -412,7 +411,6 @@ if __name__ == "__main__":
     parser.add_argument('--maxSamples', type=int, default=sys.maxsize, help="max samples", dest='maxSamples')
     parser.add_argument('--seed', type=int, required=True, dest='seed')
     parser.add_argument('--verb', type=int, dest='verbose')
-    parser.add_argument('--exp', type=int, help="number of experiments", dest='exp', default=1)
     parser.add_argument("input", help="input file")
 
     args = parser.parse_args()
@@ -424,9 +422,6 @@ if __name__ == "__main__":
         print("Eta needs to be at least two times epsilon")
         exit(1)
     delta = args.delta
-    numExperiments = args.exp
-    if numExperiments == -1:
-        numExperiments = sys.maxsize
     searchOrder = args.searchOrder
     verbosity = args.verbose
 
@@ -443,44 +438,42 @@ if __name__ == "__main__":
         maxSamples=maxSamples, inputFile=inputFile,
         samplerType=args.sampler)
 
-    for experiment in range(numExperiments):
-        print("Experiment: {:<5} of {:>5}".format(experiment, numExperiments))
+    breakExperiment = False
+    exp.totalSolutionsGenerated = 0
+    exp.totalUniformSamples = 0
+    exp.thresholdSolutions = 0
+    for j in listforTraversal:
+        tj = math.ceil(math.pow(2, j)*(2*epsilon+eta)/((eta-2*epsilon)**2)*math.log(4.0/(eta+2*epsilon), 2)*(4*math.e/(math.e-1)*math.log(1.0/delta)))
+        beta = (math.pow(2, j-1)+1)*(eta + 2*epsilon)*1.0/(4+(2*epsilon+eta)*(math.pow(2, j-1) - 1))
+        gamma = (beta-2*epsilon)/4
+        constantFactor = math.ceil(1/(8.79*gamma*gamma))
+        boundFactor = math.log((16)*(math.e/(math.e-1))*(1/(delta*(eta-2*epsilon)**2))*math.log(4/(eta+2*epsilon), 2)*math.log(1/delta), 2)
+        print("constantFactor:{:<4} boundFactor: {:<20} logBoundFactor: {:<20}".format(
+            constantFactor, boundFactor, math.log(boundFactor, 2)))
+        print("tj: {:<6} totalLoops: {:<5} beta: {:<10} epsilon: {:<10}".format(
+            tj, totalLoops, beta, epsilon))
+
+        exp.numSolutions = int(math.ceil(constantFactor*boundFactor))
+        exp.loThresh = int((exp.numSolutions*1.0/2)*(1-(beta+2*epsilon)/2))
+        exp.hiThresh = int((exp.numSolutions*1.0/2)*(1+(beta+2*epsilon)/2))
+        print("numSolutions: {:<5} loThresh:{:<6} hiThresh: {:<6}".format(
+            exp.numSolutions, exp.loThresh, exp.hiThresh))
+
+        i = 0
         breakExperiment = False
-        exp.totalSolutionsGenerated = 0
-        exp.totalUniformSamples = 0
-        exp.thresholdSolutions = 0
-        for j in listforTraversal:
-            tj = math.ceil(math.pow(2, j)*(2*epsilon+eta)/((eta-2*epsilon)**2)*math.log(4.0/(eta+2*epsilon), 2)*(4*math.e/(math.e-1)*math.log(1.0/delta)))
-            beta = (math.pow(2, j-1)+1)*(eta + 2*epsilon)*1.0/(4+(2*epsilon+eta)*(math.pow(2, j-1) - 1))
-            gamma = (beta-2*epsilon)/4
-            constantFactor = math.ceil(1/(8.79*gamma*gamma))
-            boundFactor = math.log((16)*(math.e/(math.e-1))*(1/(delta*(eta-2*epsilon)**2))*math.log(4/(eta+2*epsilon), 2)*math.log(1/delta), 2)
-            print("constantFactor:{:<4} boundFactor: {:<20} logBoundFactor: {:<20}".format(
-                constantFactor, boundFactor, math.log(boundFactor, 2)))
-            print("tj: {:<6} totalLoops: {:<5} beta: {:<10} epsilon: {:<10}".format(
-                tj, totalLoops, beta, epsilon))
-
-            exp.numSolutions = int(math.ceil(constantFactor*boundFactor))
-            exp.loThresh = int((exp.numSolutions*1.0/2)*(1-(beta+2*epsilon)/2))
-            exp.hiThresh = int((exp.numSolutions*1.0/2)*(1+(beta+2*epsilon)/2))
-            print("numSolutions: {:<5} loThresh:{:<6} hiThresh: {:<6}".format(
-                exp.numSolutions, exp.loThresh, exp.hiThresh))
-
-            i = 0
-            breakExperiment = False
-            while i < int(tj) and not breakExperiment:
-                i += 1
-                breakExperiment = exp.one_experiment(experiment, j, i, numExperiments, tj)
-
-                if breakExperiment:
-                    break
+        while i < int(tj) and not breakExperiment:
+            i += 1
+            breakExperiment = exp.one_experiment(j, i, tj)
 
             if breakExperiment:
                 break
 
-        if not breakExperiment:
-            print("exp:{2} Accept:1 TotalSolutionsGenerated:{0} TotalUniformSamples:{1}".format(
-                exp.totalSolutionsGenerated,
-                exp.totalUniformSamples, experiment))
+        if breakExperiment:
+            break
 
-        breakExperiment = False
+    if not breakExperiment:
+        print("exp:{2} Accept:1 TotalSolutionsGenerated:{0} TotalUniformSamples:{1}".format(
+            exp.totalSolutionsGenerated,
+            exp.totalUniformSamples))
+
+    breakExperiment = False
