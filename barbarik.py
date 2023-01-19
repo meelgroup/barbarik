@@ -76,7 +76,8 @@ def CM_unif_test(eta,epsilon,delta,maxSamples,searchOrder,verbosity,seed):
             exp.totalSolutionsGenerated,
             exp.totalUniformSamples))
 
-    breakExperiment = False    
+def PM_test(eta,epsilon,delta,maxSamples,verbosity,seed):
+    return 0
 
 if __name__ == "__main__":
 
@@ -91,6 +92,7 @@ if __name__ == "__main__":
     parser.add_argument('--eta', type=float, help="default = 0.9", default=0.9, dest='eta')
     parser.add_argument('--epsilon', type=float, help="default = 0.3", default=0.3, dest='epsilon')
     parser.add_argument('--delta', type=float, help="default = 0.05", default=0.05, dest='delta')
+    parser.add_argument('--testtype', type=int, default=1, help="uniform(0) vs. general(1)", dest='testtype')
     parser.add_argument('--reverse', type=int, default=0, help="order to search in", dest='searchOrder')
     parser.add_argument('--maxSamples', type=int, default=sys.maxsize, help="max samples", dest='maxSamples')
     parser.add_argument('--seed', type=int, required=True, dest='seed')
@@ -105,10 +107,15 @@ if __name__ == "__main__":
     
     delta = args.delta
     searchOrder = args.searchOrder
+    testtype = args.testtype
     verbosity = args.verbose
 
     seed = args.seed
     random.seed(seed)
     maxSamples = args.maxSamples
 
-    CM_unif_test(eta,epsilon,delta,maxSamples,searchOrder,verbosity,seed)
+#change this default to weighted
+    if testtype == 1:
+        CM_unif_test(eta,epsilon,delta,maxSamples,searchOrder,verbosity,seed)
+    else:
+        PM_test(eta,epsilon,delta,maxSamples,verbosity,seed)
