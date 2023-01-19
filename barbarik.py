@@ -27,7 +27,7 @@ import argparse
 import copy
 import tempfile
 
-from assignment_interface import *
+from interfaces.cnf import *
 
 
 class ChainFormulaSetup:
