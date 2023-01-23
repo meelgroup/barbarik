@@ -5,8 +5,8 @@ from copy import deepcopy
 import random
 import tempfile
 
-from WAPS.waps import sampler as samp
-import weightcount.WeightCount as chainform
+from interfaces.WAPS.waps import sampler as samp
+import interfaces.weightcount.WeightCount as chainform
 
 SAMPLER_UNIGEN3 = 1
 SAMPLER_QUICKSAMPLER = 2
@@ -19,7 +19,7 @@ SAMPLER_CUSTOM = 7
 
 def get_sampler_string(samplerType):
     if samplerType == SAMPLER_UNIGEN3:
-        return 'UniGen'
+        return 'UniGen3'
     if samplerType == SAMPLER_APPMC3:
         return 'AppMC3'
     if samplerType == SAMPLER_QUICKSAMPLER:
@@ -46,18 +46,18 @@ def getSolutionFromCustomSampler(inputFile, numSolutions, indVarList):
     return solreturnList
 
 
-def getSolutionFromSampler(seed, inputFile, numSolutions, samplerType, indVarList):
-    if samplerType == SAMPLER_UNIGEN3:
-        return getSolutionFromUniGen3(inputFile, numSolutions, indVarList)
-    if samplerType == SAMPLER_QUICKSAMPLER:
-        return getSolutionFromQuickSampler(inputFile, numSolutions, indVarList)
-    if samplerType == SAMPLER_STS:
-        return getSolutionFromSTS(seed, inputFile, numSolutions, indVarList)
-    if samplerType == SAMPLER_CUSTOM:
-        return getSolutionFromCustomSampler(inputFile, numSolutions, indVarList)
-    else:
-        print("Error")
-        return None
+# def getSolutionFromSampler(seed, inputFile, numSolutions, samplerType, indVarList):
+#     if samplerType == SAMPLER_UNIGEN3:
+#         return getSolutionFromUniGen3(inputFile, numSolutions, indVarList)
+#     if samplerType == SAMPLER_QUICKSAMPLER:
+#         return getSolutionFromQuickSampler(inputFile, numSolutions, indVarList)
+#     if samplerType == SAMPLER_STS:
+#         return getSolutionFromSTS(seed, inputFile, numSolutions, indVarList)
+#     if samplerType == SAMPLER_CUSTOM:
+#         return getSolutionFromCustomSampler(inputFile, numSolutions, indVarList)
+#     else:
+#         print("Error")
+#         return None
 
 
 # returns List of Independent Variables
@@ -715,28 +715,25 @@ def chainFormulaSetup(sampleSol, unifSol, numSolutions):
     ##########
     # clean up the solutions
     ##########
-    sampleSol = sampleSol[0].strip()
-    if sampleSol.endswith(' 0'):
-        sampleSol = sampleSol[:-2]
-    unifSol = unifSol[0].strip()
-    if unifSol.endswith(' 0'):
-        unifSol = unifSol[:-2]
+
+    sampleSol = sampleSol[0]
+    unifSol = unifSol[0]
 
     # adding more chain formulas (at most 8 in total: 3 + 5)
     # these chain formulas will have 31 solutions over 6 variables
-    lenSol = len(sampleSol.split())
+    lenSol = len(sampleSol)
     for i in range(min(int(log(numSolutions, 2))+4, lenSol-3, 5)):
         countList.append(31)
         newVarList.append(6)
     assert len(countList) == len(newVarList)
 
     # picking selector literals, i.e. k1, k2, k3, randomly
-    sampleLitList = random.sample(sampleSol.split(), len(countList))
+    sampleLitList = random.sample(sampleSol, len(countList))
     unifLitList = []
-    unifSolMap = unifSol.split()
+    unifSolMap = unifSol
     for lit in sampleLitList:
         unifLitList.append(unifSolMap[abs(int(lit))-1])
-
+    print(unifSol)
     assert len(unifLitList) == len(sampleLitList)
     for a, b in zip(unifLitList, sampleLitList):
         assert abs(int(a)) == abs(int(b))
@@ -752,57 +749,57 @@ def chainFormulaSetup(sampleSol, unifSol, numSolutions):
 
 
 def check_cnf(fname):
-        with open(fname, 'r') as f:
-            lines = f.readlines()
+    with open(fname, 'r') as f:
+        lines = f.readlines()
 
-        given_vars = None
-        given_cls = None
-        cls = 0
-        max_var = 0
-        for line in lines:
-            line = line.strip()
+    given_vars = None
+    given_cls = None
+    cls = 0
+    max_var = 0
+    for line in lines:
+        line = line.strip()
 
-            if len(line) == 0:
-                print("ERROR: CNF is incorrectly formatted, empty line!")
-                return False
-
-            line = line.split()
-            line = [l.strip() for l in line]
-
-            if line[0] == "p":
-                assert len(line) == 4
-                assert line[1] == "cnf"
-                given_vars = int(line[2])
-                given_cls = int(line[3])
-                continue
-
-            if line[0] == "c":
-                continue
-            
-            if line[0] == "w":
-                assert len(line) == 3
-                var = int(line[1])
-                weight = float(line[2])
-                assert(0 <= weight <= 1)
-                max_var = max(var, max_var)
-                continue  
-
-            cls +=1
-            for l in line:
-                var = abs(int(l))
-                max_var = max(var, max_var)
-
-        if max_var > given_vars:
-            print("ERROR: Number of variables given is LESS than the number of variables ued")
-            print("ERROR: Vars in header: %d   max var: %d" % (given_vars, max_var))
+        if len(line) == 0:
+            print("ERROR: CNF is incorrectly formatted, empty line!")
             return False
 
-        if cls != given_cls:
-            print("ERROR: Number of clauses in header is DIFFERENT than the number of clauses in the CNF")
-            print("ERROR: Claues in header: %d   clauses: %d" % (given_cls, cls))
-            return False
+        line = line.split()
+        line = [l.strip() for l in line]
 
-        return True
+        if line[0] == "p":
+            assert len(line) == 4
+            assert line[1] == "cnf"
+            given_vars = int(line[2])
+            given_cls = int(line[3])
+            continue
+
+        if line[0] == "c":
+            continue
+        
+        if line[0] == "w":
+            assert len(line) == 3
+            var = int(line[1])
+            weight = float(line[2])
+            assert(0 <= weight <= 1)
+            max_var = max(var, max_var)
+            continue  
+
+        cls +=1
+        for l in line:
+            var = abs(int(l))
+            max_var = max(var, max_var)
+
+    if max_var > given_vars:
+        print("ERROR: Number of variables given is LESS than the number of variables ued")
+        print("ERROR: Vars in header: %d   max var: %d" % (given_vars, max_var))
+        return False
+
+    if cls != given_cls:
+        print("ERROR: Number of clauses in header is DIFFERENT than the number of clauses in the CNF")
+        print("ERROR: Claues in header: %d   clauses: %d" % (given_cls, cls))
+        return False
+
+    return True
 
 
 class SolutionRetriever:
@@ -820,7 +817,7 @@ class SolutionRetriever:
 
         print("Using sampler: %s" % get_sampler_string(samplerType))
         if (samplerType == SAMPLER_UNIGEN3):
-            sols = SolutionRetriever.getSolutionFromUniGen(*topass_withseed)
+            sols = SolutionRetriever.getSolutionFromUniGen3(*topass_withseed)
 
         elif (samplerType == SAMPLER_APPMC3):
             sols = SolutionRetriever.getSolutionFromAppMC3(*topass_withseed)
@@ -841,19 +838,14 @@ class SolutionRetriever:
             print("Error: No such sampler!")
             exit(-1)
 
-        # clean up the solutions
-        for i in range(len(sols)):
-            sols[i] = sols[i].strip()
-            if sols[i].endswith(' 0'):
-                sols[i] = sols[i][:-2]
-
         print("Number of solutions returned by sampler:", len(sols))
         if verbosity:
             print("Solutions:", sols)
+
         return sols
 
     @staticmethod
-    def getSolutionFromUniGen(inputFile, numSolutions, indVarList, verbosity, newSeed):
+    def getSolutionFromUniGen3(inputFile, numSolutions, indVarList, verbosity, newSeed):
         # must construct ./unigen --samples=500 --verbosity=0 --threads=1  CNF-FILE SAMPLESFILE
         inputFileSuffix = inputFile.split('/')[-1][:-4]
         tempOutputFile = tempfile.gettempdir()+'/'+inputFileSuffix+".txt"
@@ -935,27 +927,26 @@ class SolutionRetriever:
             if (validLines[j].strip() == '0'):
                 continue
             fields = lines[j].strip().split(':')
-            sol = ''
+            sol = []
             i = 0
             # valutions are 0 and 1 and in the same order as c ind.
             for x in list(fields[1].strip()):
                 if (x == '0'):
-                    sol += ' -'+str(indVarList[i])
+                    sol.append(-1*indVarList[i])
                 else:
-                    sol += ' '+str(indVarList[i])
+                    sol.append(indVarList[i])                
                 i += 1
             solList.append(sol)
 
         solreturnList = solList
         if len(solList) > numSolutions:
             solreturnList = random.sample(solList, numSolutions)
+        elif len(solreturnList) < numSolutions:
+            print("Error: Quicksampler did not find required number of solutions")
+            exit(1)
 
         os.unlink(inputFile+'.samples')
         os.unlink(inputFile+'.samples.valid')
-
-        if len(solreturnList) != numSolutions:
-            print("Did not find required number of solutions")
-            sys.exit(1)
 
         return solreturnList
 
@@ -984,8 +975,10 @@ class SolutionRetriever:
                 startParse = False
                 continue
             fields = line.strip().split(',')
+            
             solCount = int(fields[0])
-            sol = ' '
+            sol = []
+            
             i = 1
             for x in list(fields[1]):
                 if (x == '0'):
@@ -993,6 +986,7 @@ class SolutionRetriever:
                 else:
                     sol += ' '+str(i)
                 i += 1
+                
             for i in range(solCount):
                 solList.append(sol)
 
