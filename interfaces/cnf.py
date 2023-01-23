@@ -1,6 +1,6 @@
 import sys
 import os 
-from math import ceil, log, sqrt
+from math import ceil, log, sqrt, e
 from copy import deepcopy
 import random
 import tempfile
@@ -542,8 +542,7 @@ def constructChainFormula(originalVar, solCount, newVar, origTotalVars, invert):
 def constructNewCNF(inputFile, tempFile, sampleSol, unifSol, chainFormulaConf, indVarList):
     # which variables are in pos/neg value in the sample
     sampleVal = {}
-    for i in sampleSol.strip().split():
-        i = int(i)
+    for i in sampleSol:
         if i != 0:
             if abs(i) not in indVarList:
                 continue
@@ -553,8 +552,7 @@ def constructNewCNF(inputFile, tempFile, sampleSol, unifSol, chainFormulaConf, i
     # which variables are in pos/neg value in the uniform sample
     unifVal = {}
     diffIndex = -1
-    for j in unifSol.strip().split():
-        j = int(j)
+    for j in unifSol:
         if j != 0:
             if abs(j) not in indVarList:
                 continue
@@ -677,6 +675,11 @@ def constructNewCNF(inputFile, tempFile, sampleSol, unifSol, chainFormulaConf, i
     #exit(0)
 
     return False, tempIndVarList, oldIndVarList
+
+
+class dist_P:
+    def __init__(self,inputFile) -> None:
+        self.sampler
 
 class IdealSampleRetriever:
     def __init__(self,inputFile):
@@ -865,7 +868,9 @@ class SolutionRetriever:
             if line.startswith('v'):
                 freq = int(line.split(':')[-1])
                 for i in range(freq):
-                    solList.append(line.split(':')[0].replace('v', '').strip())
+                    sol = line.split(':')[0].replace('v', '').strip().split()[:-1]
+                    sol = [int(i) for i in sol]
+                    solList.append(sol)
 
         solreturnList = solList
         if (len(solList) > numSolutions):
@@ -895,7 +900,9 @@ class SolutionRetriever:
             line = line.strip()
             freq = int(line.split(':')[0])
             for i in range(freq):
-                solList.append(line.split(':')[1].strip())
+                sol = line.split(':')[1].strip().split()[:-1]
+                sol = [int(i) for i in sol]
+                solList.append(sol)
 
         solreturnList = solList
         if len(solList) > numSolutions:
@@ -982,9 +989,9 @@ class SolutionRetriever:
             i = 1
             for x in list(fields[1]):
                 if (x == '0'):
-                    sol += ' -'+str(i)
+                    sol.append(-i)
                 else:
-                    sol += ' '+str(i)
+                    sol.append(i)
                 i += 1
                 
             for i in range(solCount):
@@ -1019,13 +1026,13 @@ class SolutionRetriever:
             if (shouldStart):
 
                 i = 0
-                sol = ''
+                sol = []
                 # valutions are 0 and 1 and in the same order as c ind.
                 for x in list(lines[j].strip()):
                     if (x == '0'):
-                        sol += ' -'+str(indVarList[i])
+                        sol.append(-indVarList[i])
                     else:
-                        sol += ' '+str(indVarList[i])
+                        sol.append(indVarList[i])
                     i += 1
                 solList.append(sol)
 
@@ -1062,14 +1069,14 @@ class SolutionRetriever:
             if line.strip() == 'SAT':
                 continue
 
-            sol = ""
+            sol = []
             lits = line.split(" ")
             for y in indVarList:
                 if str(y) in lits:
-                    sol += ' ' + str(y)
+                    sol.append(y)
 
                 if "-" + str(y) in lits:
-                    sol += ' -' + str(y)
+                    sol.append(-y)
             solList.append(sol)
 
         solreturnList = solList
@@ -1081,37 +1088,39 @@ class SolutionRetriever:
         os.unlink(outputFile)
         return solreturnList
 
-class unif_Experiment:
-    def __init__(self, inputFile, maxSamples, samplerType):
+class cnf_test:
+    def __init__(self, samplerType, inputFile, maxSamples):
         inputFileSuffix = inputFile.split('/')[-1][:-4]
         self.tempFile = tempfile.gettempdir() + "/" + inputFileSuffix+"_t.cnf"
         self.indVarList = parseIndSupport(inputFile)
         self.inputFile = inputFile
         self.samplerType = samplerType
         self.maxSamples = maxSamples
-
+        self.thresholdSolutions = 0
+        self.totalSamplesGenerated = 0
         self.samplerString = get_sampler_string(samplerType)
 
+   
     # Returns True if uniform and False otherwise
-    def testUniformity(self, solList, indVarList):
+    def testUniformity(self, solList, indVarList, loThresh, hiThresh):
         solMap = {}
         baseMap = {}
         for sol in solList:
             solution = ''
-            solFields = sol.split()
+            solFields = sol
             for entry in solFields:
-                if abs(int(entry)) in indVarList:
-                    solution += entry+' '
+                if abs(entry) in indVarList:
+                    solution+= ' ' + str(entry)
 
             if solution in solMap.keys():
                 solMap[solution] += 1
             else:
                 solMap[solution] = 1
 
-            if sol not in baseMap.keys():
-                baseMap[sol] = 1
+            if solution not in baseMap.keys():
+                baseMap[solution] = 1
             else:
-                baseMap[sol] += 1
+                baseMap[solution] += 1
 
         if not bool(solMap):
             print("No Solutions were given to the test")
@@ -1120,14 +1129,54 @@ class unif_Experiment:
         key = next(iter(solMap))
 
         print("baseMap: {:<6} numSolutions: {:<6} SolutionsCount: {:<6} loThresh: {:<6} hiThresh: {:<6}".format(
-            len(baseMap.keys()), self.numSolutions, solMap[key], self.loThresh, self.hiThresh))
+            len(baseMap.keys()), self.numSolutions, solMap[key], loThresh, hiThresh))
 
-        if solMap[key] >= self.loThresh and solMap[key] <= self.hiThresh:
+        if solMap[key] >= loThresh and solMap[key] <= hiThresh:
             return True
         else:
             return False
 
-    def one_experiment(self, j, i, tj, verbosity):
+    def CM_test(self, epsilon, eta, delta, verbosity, seed):
+        
+        totalLoops = int(ceil(log(2.0/(eta+2*epsilon), 2))+1)
+        listforTraversal = range(totalLoops, 0, -1)
+        
+        for j in listforTraversal:
+            tj = ceil(pow(2, j)*(2*epsilon+eta)/((eta-2*epsilon)**2)*log(4.0/(eta+2*epsilon), 2)*(4*e/(e-1)*log(1.0/delta)))
+            beta = (pow(2, j-1)+1)*(eta + 2*epsilon)*1.0/(4+(2*epsilon+eta)*(pow(2, j-1) - 1))
+            gamma = (beta-2*epsilon)/4
+            constantFactor = ceil(1/(8.79*gamma*gamma))
+            boundFactor = log((16)*(e/(e-1))*(1/(delta*(eta-2*epsilon)**2))*log(4/(eta+2*epsilon), 2)*log(1/delta), 2)
+            
+            if verbosity:
+                print("constantFactor:{:<4} boundFactor: {:<20} logBoundFactor: {:<20}".format(
+                    constantFactor, boundFactor, log(boundFactor, 2)))
+                print("tj: {:<6} totalLoops: {:<5} beta: {:<10} epsilon: {:<10}".format(
+                    tj, totalLoops, beta, epsilon))
+
+            self.numSolutions = int(ceil(constantFactor*boundFactor))
+
+            loThresh = int((self.numSolutions*1.0/2)*(1-(beta+2*epsilon)/2))
+            hiThresh = int((self.numSolutions*1.0/2)*(1+(beta+2*epsilon)/2))
+            print("numSolutions: {:<5} loThresh:{:<6} hiThresh: {:<6}".format(
+                self.numSolutions, loThresh, hiThresh))
+
+            breakExperiment = False
+
+            for i in range(int(tj)):
+                breakExperiment = self.inner_loop(j, i, tj, loThresh, hiThresh, verbosity)
+
+                if breakExperiment:
+                    break
+
+            if breakExperiment:
+                break
+
+        if not breakExperiment:
+            print("Accept:1 TotalSamplesGenerated:{0} ".format(
+                self.totalSamplesGenerated))
+
+    def inner_loop(self, j, i, tj, loThresh, hiThresh, verbosity):
         self.thresholdSolutions += self.numSolutions
 
         # generate a new seed value for every different (i,j,experiment)
@@ -1135,12 +1184,12 @@ class unif_Experiment:
         # get sampler's solutions
         sampleSol = SolutionRetriever.getSolutionFromSampler(
             self.inputFile, 1, self.samplerType, self.indVarList, verbosity, newSeed)
-        self.totalSolutionsGenerated += 1
+        self.totalSamplesGenerated += 1
 
         # get uniform sampler's solutions
         unifSol = SolutionRetriever.getSolutionFromSampler(
             self.inputFile, 1, SAMPLER_SPUR, self.indVarList, verbosity, newSeed)
-        self.totalUniformSamples += 1
+        self.totalSamplesGenerated += 1
 
         chainFormulaConf = chainFormulaSetup(sampleSol, unifSol, self.numSolutions)
         identical_sol, tempIndVarList, oldIndVarList = constructNewCNF(
@@ -1158,17 +1207,17 @@ class unif_Experiment:
         solList = SolutionRetriever.getSolutionFromSampler(
             self.tempFile, self.numSolutions, self.samplerType, tempIndVarList, verbosity, newSeed)
         os.unlink(self.tempFile)
-        self.totalSolutionsGenerated += self.numSolutions
+        self.totalSamplesGenerated += self.numSolutions
 
-        isUniform = self.testUniformity(solList, oldIndVarList)
+        isUniform = self.testUniformity(solList, oldIndVarList, loThresh, hiThresh)
 
         print("sampler: {:<8s} i: {:<4d} isUniform: {:<4d} TotalSolutionsGenerated: {:<6d}".format(
             self.samplerString, i, isUniform,
-            self.totalSolutionsGenerated))
+            self.totalSamplesGenerated))
 
         if not isUniform:
-            print("RejectIteration:{0}  Loop:{1} TotalSolutionsGenerated:{2} TotalUniformSamples:{3}".format(
-                i, j, self.totalSolutionsGenerated, self.totalUniformSamples))
+            print("RejectIteration:{0}  Loop:{1} TotalSolutionsGenerated:{2} ".format(
+                i, j, self.totalSamplesGenerated))
 
             return True
 
