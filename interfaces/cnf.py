@@ -272,38 +272,6 @@ def constructKernel(inputFile, tempFile, samplerSample, idealSample, numSolution
     return tempIndVarList
 
 
-# Returns 1 if Ideal and 0 otherwise
-def biasFind(sample, solList, indVarList):
-    solMap = {}
-    numSolutions = len(solList)
-    for sol in solList:
-        solution = ""
-        solFields = sol
-        solFields.sort(key=abs)
-        for entry in solFields:
-            if (abs(entry)) in indVarList:
-                solution += str(entry) + " "
-        if solution in solMap.keys():
-            solMap[solution] += 1
-        else:
-            solMap[solution] = 1
-
-    if not (bool(solMap)):
-        print("No Solutions were given to the test")
-        exit(1)
-    print("c Printing solMap")
-    print(solMap)
-
-    solution = ""
-
-    for i in solList[0]:
-        if abs(i) in indVarList:
-            solution += str(i) + " "
-
-    print("solList[0]", solList[0])
-    print("sample", sample)
-    return solMap.get(solution, 0)*1.0/numSolutions
-
 
 def insideBucket(K,eps,eps2,eta,delta,UserInputFile,inputFile,samplerType,indVarList,UserIndVarList,weight_map,ideal,totalSolsGenerated,seed):
 
@@ -1135,6 +1103,42 @@ class cnf_test:
             return True
         else:
             return False
+
+    # Returns 1 if Ideal and 0 otherwise
+    def biasFind(sample, solList, indVarList):
+        solMap = {}
+        numSolutions = len(solList)
+        for sol in solList:
+            solution = ""
+            solFields = sol
+            solFields.sort(key=abs)
+            for entry in solFields:
+                if (abs(entry)) in indVarList:
+                    solution += str(entry) + " "
+            if solution in solMap.keys():
+                solMap[solution] += 1
+            else:
+                solMap[solution] = 1
+
+        if not (bool(solMap)):
+            print("Error: no Solutions were given to the test")
+            exit(1)
+        print("c Printing solMap")
+        print(solMap)
+
+        solution = ""
+
+        for i in solList[0]:
+            if abs(i) in indVarList:
+                solution += str(i) + " "
+
+        print("solList[0]", solList[0])
+        print("sample", sample)
+
+        if(len(set(solList[0]).intersection(set(sample))) == len(sample)):
+            return solMap.get(solution, 0)*1.0/numSolutions
+        else:
+            return 1.0-(solMap.get(solution, 0)*1.0/numSolutions)
 
     def CM_test(self, epsilon, eta, delta, verbosity, seed):
         

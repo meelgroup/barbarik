@@ -101,17 +101,6 @@ def PM_test(inputFile,samplerType, eta,epsilon,delta,maxSamples,verbosity,seed):
     UserIndVarList = parseIndSupport(UserInputFile)
     indVarList = list(chainform.Transform(UserInputFile, inputFile, 2))  # precision set to 4
 
-    samplerString = ""
-
-    if samplerType == SAMPLER_UNIGEN3:
-        samplerString = "UniGen3"
-    if samplerType == SAMPLER_QUICKSAMPLER:
-        samplerString = "QuickSampler"
-    if samplerType == SAMPLER_STS:
-        samplerString = "STS"
-    if samplerType == SAMPLER_CUSTOM:
-        samplerString = "CustomSampler"
-
     weight_map = parseWeights(UserInputFile, UserIndVarList)
 
     totalSolsGenerated = 0
