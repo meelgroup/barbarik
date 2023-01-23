@@ -31,33 +31,37 @@ SAMPLER_QUICKSAMPLER = 2
 SAMPLER_STS = 3
 SAMPLER_CUSTOM = 4
 
-def CM_unif_test(eta,epsilon,delta,maxSamples,searchOrder,verbosity,seed):
+def CM_unif_test(inputFile,eta,epsilon,delta,maxSamples,verbosity,seed):
+    
     if (eta < 2*epsilon):
         print("Eta needs to be at least two times epsilon")
         exit(1)
+    
     totalLoops = int(ceil(log(2.0/(eta+2*epsilon), 2))+1)
     listforTraversal = range(totalLoops, 0, -1)
-    if searchOrder == 1:
-        listforTraversal = range(1, totalLoops+1, 1)
 
     exp = unif_Experiment(
     maxSamples=maxSamples, inputFile=inputFile,
     samplerType=args.sampler)
 
     breakExperiment = False
+    
     exp.totalSolutionsGenerated = 0
     exp.totalUniformSamples = 0
     exp.thresholdSolutions = 0
+
     for j in listforTraversal:
         tj = ceil(pow(2, j)*(2*epsilon+eta)/((eta-2*epsilon)**2)*log(4.0/(eta+2*epsilon), 2)*(4*e/(e-1)*log(1.0/delta)))
         beta = (pow(2, j-1)+1)*(eta + 2*epsilon)*1.0/(4+(2*epsilon+eta)*(pow(2, j-1) - 1))
         gamma = (beta-2*epsilon)/4
         constantFactor = ceil(1/(8.79*gamma*gamma))
         boundFactor = log((16)*(e/(e-1))*(1/(delta*(eta-2*epsilon)**2))*log(4/(eta+2*epsilon), 2)*log(1/delta), 2)
-        print("constantFactor:{:<4} boundFactor: {:<20} logBoundFactor: {:<20}".format(
-            constantFactor, boundFactor, log(boundFactor, 2)))
-        print("tj: {:<6} totalLoops: {:<5} beta: {:<10} epsilon: {:<10}".format(
-            tj, totalLoops, beta, epsilon))
+        
+        if verbosity:
+            print("constantFactor:{:<4} boundFactor: {:<20} logBoundFactor: {:<20}".format(
+                constantFactor, boundFactor, log(boundFactor, 2)))
+            print("tj: {:<6} totalLoops: {:<5} beta: {:<10} epsilon: {:<10}".format(
+                tj, totalLoops, beta, epsilon))
 
         exp.numSolutions = int(ceil(constantFactor*boundFactor))
         exp.loThresh = int((exp.numSolutions*1.0/2)*(1-(beta+2*epsilon)/2))
@@ -81,7 +85,7 @@ def CM_unif_test(eta,epsilon,delta,maxSamples,searchOrder,verbosity,seed):
             exp.totalSolutionsGenerated,
             exp.totalUniformSamples))
 
-def PM_test(eta,epsilon,delta,maxSamples,verbosity,seed):
+def PM_test(inputFile,eta,epsilon,delta,maxSamples,verbosity,seed):
     UserInputFile = args.input
     print("This is the user input:--", UserInputFile)
 
@@ -139,8 +143,7 @@ if __name__ == "__main__":
     parser.add_argument('--eta', type=float, help="default = 0.9", default=0.9, dest='eta')
     parser.add_argument('--epsilon', type=float, help="default = 0.3", default=0.3, dest='epsilon')
     parser.add_argument('--delta', type=float, help="default = 0.05", default=0.05, dest='delta')
-    parser.add_argument('--testtype', type=int, default=1, help="uniform(0) vs. general(1)", dest='testtype')
-    parser.add_argument('--reverse', type=int, default=0, help="order to search in", dest='searchOrder')
+    parser.add_argument('--testtype', type=int, default=0, help="uniform(0) vs. general(1)", dest='testtype')
     parser.add_argument('--maxSamples', type=int, default=sys.maxsize, help="max samples", dest='maxSamples')
     parser.add_argument('--seed', type=int, required=True, dest='seed')
     parser.add_argument('--verb', type=int, dest='verbose')
@@ -150,19 +153,18 @@ if __name__ == "__main__":
     inputFile = args.input
 
     eta = args.eta
-    epsilon = args.epsilon
-    
+    epsilon = args.epsilon    
     delta = args.delta
-    searchOrder = args.searchOrder
+    maxSamples = args.maxSamples
+
     testtype = args.testtype
     verbosity = args.verbose
 
     seed = args.seed
     random.seed(seed)
-    maxSamples = args.maxSamples
-
-#change this default to weighted
-    if testtype == 1:
-        CM_unif_test(eta,epsilon,delta,maxSamples,searchOrder,verbosity,seed)
+    
+    #change this default to weighted
+    if testtype == 0:
+        CM_unif_test(inputFile,eta,epsilon,delta,maxSamples,verbosity,seed)
     else:
-        PM_test(eta,epsilon,delta,maxSamples,verbosity,seed)
+        PM_test(inputFile,eta,epsilon,delta,maxSamples,verbosity,seed)
