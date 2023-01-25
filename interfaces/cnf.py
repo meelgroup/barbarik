@@ -108,7 +108,6 @@ def parseWeights(inputFile, indVarList):
 
 def weightof(weight_map, sample, UserIndVarList):
     sample_w = deepcopy(sample)
-    sample_w.sort(key=abs)
 
     weight = 1.0
 
@@ -368,7 +367,7 @@ def insideBucket(K,eps,eps2,eta,delta,UserInputFile,inputFile,samplerType,indVar
             R = hoeffding(L,H,delta/(4*collisions*T))
             print("R #of PAIRCOND queries "+str(R))
 
-            if(totalSolsGenerated + R > 10**7):
+            if(totalSolsGenerated + R > maxSamples):
                 print("Looking for more than 10**7 solutions", R)
                 print("too many to ask ,so quitting here")
                 print("NumSol:", totalSolsGenerated)
@@ -704,7 +703,7 @@ def chainFormulaSetup(sampleSol, unifSol, numSolutions):
     unifSolMap = unifSol
     for lit in sampleLitList:
         unifLitList.append(unifSolMap[abs(int(lit))-1])
-    print(unifSol)
+
     assert len(unifLitList) == len(sampleLitList)
     for a, b in zip(unifLitList, sampleLitList):
         assert abs(int(a)) == abs(int(b))
@@ -771,6 +770,42 @@ def check_cnf(fname):
         return False
 
     return True
+
+# Returns bias wrt sample
+def biasFind(sample, solList, indVarList):
+    solMap = {}
+    numSolutions = len(solList)
+    for sol in solList:
+        solution = ''
+        solFields = sol
+        for entry in solFields:
+            if abs(entry) in indVarList:
+                solution += str(entry) + " "
+
+        if solution in solMap.keys():
+            solMap[solution] += 1
+        else:
+            solMap[solution] = 1
+
+    if not bool(solMap):
+        print("No Solutions were given to the test")
+        exit(1)
+    
+    print("c Printing counts of each sample: ", list(solMap.values()))
+
+    solution = ""
+
+    for i in solList[0]:
+        if abs(i) in indVarList:
+            solution += str(i) + " "
+
+    #print("solList[0]", solList[0])
+    #print("sample", sample)
+
+    if(len(set(solList[0]).intersection(set(sample))) == len(sample)):
+        return solMap.get(solution, 0)*1.0/numSolutions
+    else:
+        return 1.0-(solMap.get(solution, 0)*1.0/numSolutions)
 
 
 class SolutionRetriever:
@@ -1068,77 +1103,6 @@ class cnf_test:
         self.totalSamplesGenerated = 0
         self.samplerString = get_sampler_string(samplerType)
 
-   
-    # Returns True if uniform and False otherwise
-    def testUniformity(self, solList, indVarList, loThresh, hiThresh):
-        solMap = {}
-        baseMap = {}
-        for sol in solList:
-            solution = ''
-            solFields = sol
-            for entry in solFields:
-                if abs(entry) in indVarList:
-                    solution+= ' ' + str(entry)
-
-            if solution in solMap.keys():
-                solMap[solution] += 1
-            else:
-                solMap[solution] = 1
-
-            if solution not in baseMap.keys():
-                baseMap[solution] = 1
-            else:
-                baseMap[solution] += 1
-
-        if not bool(solMap):
-            print("No Solutions were given to the test")
-            exit(1)
-
-        key = next(iter(solMap))
-
-        print("baseMap: {:<6} numSolutions: {:<6} SolutionsCount: {:<6} loThresh: {:<6} hiThresh: {:<6}".format(
-            len(baseMap.keys()), self.numSolutions, solMap[key], loThresh, hiThresh))
-
-        if solMap[key] >= loThresh and solMap[key] <= hiThresh:
-            return True
-        else:
-            return False
-
-    # Returns 1 if Ideal and 0 otherwise
-    def biasFind(sample, solList, indVarList):
-        solMap = {}
-        numSolutions = len(solList)
-        for sol in solList:
-            solution = ""
-            solFields = sol
-            solFields.sort(key=abs)
-            for entry in solFields:
-                if (abs(entry)) in indVarList:
-                    solution += str(entry) + " "
-            if solution in solMap.keys():
-                solMap[solution] += 1
-            else:
-                solMap[solution] = 1
-
-        if not (bool(solMap)):
-            print("Error: no Solutions were given to the test")
-            exit(1)
-        print("c Printing solMap")
-        print(solMap)
-
-        solution = ""
-
-        for i in solList[0]:
-            if abs(i) in indVarList:
-                solution += str(i) + " "
-
-        print("solList[0]", solList[0])
-        print("sample", sample)
-
-        if(len(set(solList[0]).intersection(set(sample))) == len(sample)):
-            return solMap.get(solution, 0)*1.0/numSolutions
-        else:
-            return 1.0-(solMap.get(solution, 0)*1.0/numSolutions)
 
     def CM_test(self, epsilon, eta, delta, verbosity, seed):
         
@@ -1160,8 +1124,8 @@ class cnf_test:
 
             self.numSolutions = int(ceil(constantFactor*boundFactor))
 
-            loThresh = int((self.numSolutions*1.0/2)*(1-(beta+2*epsilon)/2))
-            hiThresh = int((self.numSolutions*1.0/2)*(1+(beta+2*epsilon)/2))
+            loThresh = (1-(beta+2*epsilon)/2)/2
+            hiThresh = (1+(beta+2*epsilon)/2)/2
             print("numSolutions: {:<5} loThresh:{:<6} hiThresh: {:<6}".format(
                 self.numSolutions, loThresh, hiThresh))
 
@@ -1200,7 +1164,7 @@ class cnf_test:
             self.inputFile, self.tempFile, sampleSol[0], unifSol[0],
             chainFormulaConf, self.indVarList)
 
-        # the two solutions were the same, couldn't construct CNF
+        # the two solutions were the same, unbiased
         if identical_sol:
             return False
 
@@ -1213,7 +1177,13 @@ class cnf_test:
         os.unlink(self.tempFile)
         self.totalSamplesGenerated += self.numSolutions
 
-        isUniform = self.testUniformity(solList, oldIndVarList, loThresh, hiThresh)
+        isUniform = True
+        bias = biasFind(unifSol[0], solList, oldIndVarList)
+
+        if loThresh <= bias <= hiThresh:
+            isUniform = True 
+        else:
+            isUniform = False
 
         print("sampler: {:<8s} i: {:<4d} isUniform: {:<4d} TotalSolutionsGenerated: {:<6d}".format(
             self.samplerString, i, isUniform,
