@@ -1,23 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Kuldeep Meel
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; version 2
-# of the License.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
-
 from __future__ import print_function
 import sys
 from math import log, ceil, e
@@ -56,7 +39,7 @@ if __name__ == "__main__":
     parser.add_argument('--delta', type=float, help="default = 0.05", default=0.05, dest='delta')
     parser.add_argument('--ftype', type=int, help=filetypes, default=1, dest='ftype')
     parser.add_argument('--testtype', type=int, default=0, help="uniform(0) vs. general(1)", dest='testtype')
-    parser.add_argument('--maxSamples', type=int, default=sys.maxsize, help="max samples", dest='maxSamples')
+    parser.add_argument('--max', type=int, default=sys.maxsize, help="max samples", dest='max')
     parser.add_argument('--seed', type=int, required=True, dest='seed')
     parser.add_argument('--verb', type=int, dest='verbose')
     parser.add_argument("input", help="input file")
@@ -68,7 +51,7 @@ if __name__ == "__main__":
     eta = args.eta
     epsilon = args.epsilon    
     delta = args.delta
-    maxSamples = args.maxSamples
+    maxSamples = args.max
 
     testtype = args.testtype
     verbosity = args.verbose
@@ -113,10 +96,10 @@ def PM_test(inputFile,samplerType, eta,epsilon,delta,maxSamples,verbosity,seed):
 
     ideal = IdealSampleRetriever(inputFile = UserInputFile)
 
-    dhat, totalSolsGenerated = outsideBucket(K,theta,delta/2,UserInputFile,inputFile,samplerType,indVarList,UserIndVarList,weight_map,ideal,seed)
+    dhat, totalSolsGenerated = outsideBucket(K,theta,delta/2,UserInputFile,inputFile,samplerType,indVarList,UserIndVarList,weight_map,ideal,maxSamples,seed)
 
     if dhat - theta  > epsilon/2:
         print("Rejected as dhat("+str(dhat)+") > eps/2 ("+str(epsilon/2)+") " )
     else:
         eps2 = dhat + theta
-        insideBucket(K,epsilon,eps2,eta,delta/2,UserInputFile,inputFile,samplerType,indVarList,UserIndVarList,weight_map,ideal,totalSolsGenerated,seed)
+        insideBucket(K,epsilon,eps2,eta,delta/2,UserInputFile,inputFile,samplerType,indVarList,UserIndVarList,weight_map,ideal,totalSolsGenerated,maxSamples,seed)
