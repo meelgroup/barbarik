@@ -1,5 +1,5 @@
 import sys
-import os 
+import os
 from math import ceil, log, sqrt, e
 from copy import deepcopy
 import random
@@ -17,6 +17,7 @@ SAMPLER_SPUR = 6
 
 SAMPLER_CUSTOM = 7
 
+
 def get_sampler_string(samplerType):
     if samplerType == SAMPLER_UNIGEN3:
         return 'UniGen3'
@@ -33,15 +34,16 @@ def get_sampler_string(samplerType):
     print("ERROR: unknown sampler type")
     exit(-1)
 
+
 # @CHANGE_HERE : please make changes in the below block of code
-""" this is the method where you could run your sampler for testing
-Arguments : input file, number of solutions to be returned, list of independent variables
-output : list of solutions """
+# this is the method where you could run your sampler for testing
+# Arguments : input file, number of solutions to be returned, list of independent variables
+# output : list of solutions
 
 
 def getSolutionFromCustomSampler(inputFile, numSolutions, indVarList):
     solreturnList = []
-    """ write your code here """
+    # write your code here
 
     return solreturnList
 
@@ -73,7 +75,8 @@ def parseIndSupport(indSupportFile):
             numVars = int(fields[2])
 
         if line.startswith('c ind'):
-            line = line.strip().replace('c ind', '').replace(' 0', '').strip().replace('v ', '')
+            line = line.strip().replace('c ind', '').replace(
+                ' 0', '').strip().replace('v ', '')
             indList.extend(line.split())
 
     if len(indList) == 0:
@@ -83,9 +86,10 @@ def parseIndSupport(indSupportFile):
     return indList
 
 
-def hoeffding(p1,p2, delta):
-    assert(p1<p2)
+def hoeffding(p1, p2, delta):
+    assert (p1 < p2)
     return int(ceil(2*log(1/delta)/(p2-p1)**2))
+
 
 def parseWeights(inputFile, indVarList):
     f = open(inputFile, "r")
@@ -106,6 +110,7 @@ def parseWeights(inputFile, indVarList):
                 exit(-1)
     return weight_map
 
+
 def weightof(weight_map, sample, UserIndVarList):
     sample_w = deepcopy(sample)
 
@@ -113,13 +118,15 @@ def weightof(weight_map, sample, UserIndVarList):
 
     for i in range(len(sample_w)):
         if sample_w[i] > 0:
-            weight *= weight_map.get(abs(sample_w[i]),0.5)
+            weight *= weight_map.get(abs(sample_w[i]), 0.5)
         else:
-            weight *= 1-weight_map.get(abs(sample_w[i]),0.5)
+            weight *= 1-weight_map.get(abs(sample_w[i]), 0.5)
     return weight
+
 
 def bucketof(weight_map, sample, UserIndVarList):
     return int(ceil(log(weightof(weight_map, sample, UserIndVarList), 2)))
+
 
 def findWeightsForVariables(sampleSol, idealSol, numSolutions):
     """
@@ -128,7 +135,7 @@ def findWeightsForVariables(sampleSol, idealSol, numSolutions):
     countList = []
     newVarList = []
     lenSol = len(sampleSol)
-    tau = min(3,lenSol)
+    tau = min(3, lenSol)
 
     for _ in range(tau):
         countList.append(5)
@@ -154,10 +161,12 @@ def findWeightsForVariables(sampleSol, idealSol, numSolutions):
     return rExtList
 
 # @returns whether new file was created and the list of independent variables
+
+
 def constructNewFile(inputFile, tempFile, sampleSol, unifSol, rExtList, origIndVarList):
     sampleMap = {}
     unifMap = {}
-    diffIndex = -1   #ensures that sampleSol != unifSol when projected on indVarList
+    diffIndex = -1  # ensures that sampleSol != unifSol when projected on indVarList
     for i in sampleSol:
         if not (abs(int(i)) in origIndVarList):
             continue
@@ -195,18 +204,18 @@ def constructNewFile(inputFile, tempFile, sampleSol, unifSol, rExtList, origIndV
                 oldClauseStr += line.strip()+"\n"
             elif not (line.strip().startswith("c")):
                 oldClauseStr += line.strip()+"\n"
-    #Adding constraints to ensure only two clauses
+    # Adding constraints to ensure only two clauses
     for i in origIndVarList:
         if int(i) != diffIndex:
             numClause += 2
             solClause += (
-                str(-(diffIndex ) * sampleMap[diffIndex])
+                str(-(diffIndex) * sampleMap[diffIndex])
                 + " "
                 + str(sampleMap[int(i)] * int(i))
                 + " 0\n"
             )
             solClause += (
-                str(-(diffIndex ) * unifMap[diffIndex])
+                str(-(diffIndex) * unifMap[diffIndex])
                 + " "
                 + str(unifMap[int(i)] * int(i))
                 + " 0\n"
@@ -234,9 +243,9 @@ def constructNewFile(inputFile, tempFile, sampleSol, unifSol, rExtList, origIndV
             currentNumVar += int(newVarList[i])
             numClause += addedClauseNum
             solClause += addedClause
-        invert = True #not (invert)
+        invert = True  # not (invert)
 
-    tempIndVarList =[]
+    tempIndVarList = []
     indStr = "c ind "
     indIter = 1
     for i in origIndVarList:
@@ -252,7 +261,6 @@ def constructNewFile(inputFile, tempFile, sampleSol, unifSol, rExtList, origIndV
         indIter += 1
         tempIndVarList.append(i)
 
-
     indStr += " 0\n"
     headStr = "p cnf " + str(currentNumVar) + " " + str(numClause) + "\n"
     writeStr = headStr + indStr
@@ -266,18 +274,19 @@ def constructNewFile(inputFile, tempFile, sampleSol, unifSol, rExtList, origIndV
 
 
 def constructKernel(inputFile, tempFile, samplerSample, idealSample, numSolutions, origIndVarList):
-    rExtList = findWeightsForVariables(samplerSample, idealSample, numSolutions)
-    tempIndVarList = constructNewFile(inputFile, tempFile, samplerSample, idealSample, rExtList, origIndVarList)
+    rExtList = findWeightsForVariables(
+        samplerSample, idealSample, numSolutions)
+    tempIndVarList = constructNewFile(
+        inputFile, tempFile, samplerSample, idealSample, rExtList, origIndVarList)
     return tempIndVarList
 
 
-
-def insideBucket(K,eps,eps2,eta,delta,UserInputFile,inputFile,samplerType,indVarList,UserIndVarList,weight_map,ideal,totalSolsGenerated,seed):
+def insideBucket(K, eps, eps2, eta, delta, UserInputFile, inputFile, samplerType, indVarList, UserIndVarList, weight_map, ideal, totalSolsGenerated, seed):
 
     print("eta", eta)
-    print("eps2",eps2)
+    print("eps2", eps2)
 
-    if(0.99*eta - 3.25*eps2 - 2*eps/(1-eps) < 0):
+    if (0.99*eta - 3.25*eps2 - 2*eps/(1-eps) < 0):
         print("Error: cannot test for these params")
         exit(1)
 
@@ -289,19 +298,19 @@ def insideBucket(K,eps,eps2,eta,delta,UserInputFile,inputFile,samplerType,indVar
     M = int(ceil(sqrt(K)/(0.99*eta - 3.25*eps2 - eps1)))
     print("M #of samples in each round of InBucket = ", M)
 
-    print("denom", (0.99*eta - 3.25*eps2 -eps1))
+    print("denom", (0.99*eta - 3.25*eps2 - eps1))
 
     T = int(ceil(log(2/delta)/log(10/(10 - eps1 + alpha))))
     print("T #of iteration = " + str(T))
 
-    assert(M>0)
-    assert(T>0)
+    assert (M > 0)
+    assert (T > 0)
 
     print("indVarList", indVarList)
 
     print("Getting "+str(M*T)+" samples from Ideal")
     total_weight = ideal.weight
-    AllPsamples  = ideal.getSolutionFromIdeal(M*T)
+    AllPsamples = ideal.getSolutionFromIdeal(M*T)
 
     lower_threshold_probability = -int(log(total_weight, 2))
 
@@ -309,7 +318,8 @@ def insideBucket(K,eps,eps2,eta,delta,UserInputFile,inputFile,samplerType,indVar
         seed += 1
 
         Psamples = AllPsamples[i*M:(i+1)*M]
-        Qsamples = getSolutionFromSampler(seed, inputFile, M, samplerType, indVarList)
+        Qsamples = getSolutionFromSampler(
+            seed, inputFile, M, samplerType, indVarList)
 
         projectedQsamples = []
         for sample in Qsamples:
@@ -322,8 +332,9 @@ def insideBucket(K,eps,eps2,eta,delta,UserInputFile,inputFile,samplerType,indVar
         BucketedQsamples = {}
         bucketsofQ = []
         for sample in projectedQsamples:
-            bucketID = -bucketof(weight_map, sample,UserIndVarList) - lower_threshold_probability
-            assert(bucketID >= 0)
+            bucketID = -bucketof(weight_map, sample,
+                                 UserIndVarList) - lower_threshold_probability
+            assert (bucketID >= 0)
             if bucketID <= K:
                 BucketedQsamples[bucketID] = sample
                 bucketsofQ.append(bucketID)
@@ -331,8 +342,9 @@ def insideBucket(K,eps,eps2,eta,delta,UserInputFile,inputFile,samplerType,indVar
         BucketedPsamples = {}
         bucketsofP = []
         for sample in Psamples:
-            bucketID = -bucketof(weight_map, sample,UserIndVarList) - lower_threshold_probability
-            assert(bucketID >= 0)
+            bucketID = -bucketof(weight_map, sample,
+                                 UserIndVarList) - lower_threshold_probability
+            assert (bucketID >= 0)
             if bucketID <= K:
                 BucketedPsamples[bucketID] = sample
                 bucketsofP.append(bucketID)
@@ -346,39 +358,41 @@ def insideBucket(K,eps,eps2,eta,delta,UserInputFile,inputFile,samplerType,indVar
             print("No collisions in round", i)
             continue
 
-        #R = hoeffding(L,H,delta/(2*collisions*T))
+        # R = hoeffding(L,H,delta/(2*collisions*T))
 
         for bucketID in commonBuckets:
 
             Psample = BucketedPsamples[bucketID]
             Qsample = BucketedQsamples[bucketID]
 
-            if Psample==Qsample:
+            if Psample == Qsample:
                 continue
 
             # the weight of Psample in P
-            P_p = weightof(weight_map,Psample,UserIndVarList)
+            P_p = weightof(weight_map, Psample, UserIndVarList)
             # the weightof of Qsample in P
-            P_q = weightof(weight_map,Qsample,UserIndVarList)
+            P_q = weightof(weight_map, Qsample, UserIndVarList)
 
             H = P_p/(P_p+P_q*(1+2*eps/(1-eps)))
             L = P_p/(P_p+P_q*(1+alpha))
 
-            R = hoeffding(L,H,delta/(4*collisions*T))
+            R = hoeffding(L, H, delta/(4*collisions*T))
             print("R #of PAIRCOND queries "+str(R))
 
-            if(totalSolsGenerated + R > maxSamples):
+            if (totalSolsGenerated + R > maxSamples):
                 print("Looking for more than 10**7 solutions", R)
                 print("too many to ask ,so quitting here")
                 print("NumSol:", totalSolsGenerated)
                 exit(1)
 
             tempIndVarList = constructKernel(UserInputFile, tempFile, Qsample,
-                                                    Psample, R, UserIndVarList)
-            samplinglist = list(chainform.Transform(tempFile, tempFile, 2))  # precision set to 4
-            #print("file was constructed with these", Qsample, Psample)
-            #print("samplingList:", samplinglist)
-            solList = getSolutionFromSampler(seed, tempFile, R, samplerType, samplinglist)
+                                             Psample, R, UserIndVarList)
+            samplinglist = list(chainform.Transform(
+                tempFile, tempFile, 2))  # precision set to 4
+            # print("file was constructed with these", Qsample, Psample)
+            # print("samplingList:", samplinglist)
+            solList = getSolutionFromSampler(
+                seed, tempFile, R, samplerType, samplinglist)
             totalSolsGenerated += R
 
             seed += 1
@@ -402,7 +416,7 @@ def insideBucket(K,eps,eps2,eta,delta,UserInputFile,inputFile,samplerType,indVar
     return 1
 
 
-def outsideBucket(K,theta,delta,UserInputFile,inputFile,samplerType,indVarList,UserIndVarList,weight_map,ideal,seed):
+def outsideBucket(K, theta, delta, UserInputFile, inputFile, samplerType, indVarList, UserIndVarList, weight_map, ideal, seed):
 
     numSamp = int(ceil(max(4*(K+1), 8*log(4/delta))/(theta)**2))
 
@@ -410,7 +424,8 @@ def outsideBucket(K,theta,delta,UserInputFile,inputFile,samplerType,indVarList,U
     print("Number of samples required for OutBucket ", numSamp)
 
     Psamples = ideal.getSolutionFromIdeal(numSamp)
-    Qsamples = getSolutionFromSampler(seed, inputFile, numSamp, samplerType, indVarList)
+    Qsamples = getSolutionFromSampler(
+        seed, inputFile, numSamp, samplerType, indVarList)
 
     total_weight = ideal.weight
     lower_threshold_probability = int(log(total_weight, 2))
@@ -425,18 +440,20 @@ def outsideBucket(K,theta,delta,UserInputFile,inputFile,samplerType,indVarList,U
 
     empirical_bucketP = [0]*(K+2)
     for i in Psamples:
-        bucketID = -bucketof(weight_map, i,UserIndVarList) +  lower_threshold_probability
-        assert(bucketID >= 0)
-        if bucketID <=K:
+        bucketID = -bucketof(weight_map, i, UserIndVarList) + \
+            lower_threshold_probability
+        assert (bucketID >= 0)
+        if bucketID <= K:
             empirical_bucketP[bucketID] += 1
         else:
             empirical_bucketP[K+1] += 1
 
     empirical_bucketQ = [0]*(K+2)
     for i in projectedQsamples:
-        bucketID = -bucketof(weight_map, i,UserIndVarList) +  lower_threshold_probability
-        assert(bucketID >= 0)
-        if bucketID <=K:
+        bucketID = -bucketof(weight_map, i, UserIndVarList) + \
+            lower_threshold_probability
+        assert (bucketID >= 0)
+        if bucketID <= K:
             empirical_bucketQ[bucketID] += 1
         else:
             empirical_bucketQ[K+1] += 1
@@ -444,7 +461,7 @@ def outsideBucket(K,theta,delta,UserInputFile,inputFile,samplerType,indVarList,U
     print("Bucket of P", empirical_bucketP)
     print("Bucket of Q", empirical_bucketQ)
 
-    if(len(projectedQsamples) != len(Psamples)):
+    if (len(projectedQsamples) != len(Psamples)):
         print("Error: The length of two sample sets is not equal")
         exit(0)
 
@@ -635,30 +652,31 @@ def constructNewCNF(inputFile, tempFile, sampleSol, unifSol, chainFormulaConf, i
         f.write('p cnf %d %d\n' % (currentNumVar+numVar, numCls))
         f.write(indStr)
         f.write(solClause)
-        #f.write("c -- old CNF below -- \n")
+        # f.write("c -- old CNF below -- \n")
         f.write(shiftedCNFStr)
 
-    #print("New file: ", tempFile)
-    #exit(0)
+    # print("New file: ", tempFile)
+    # exit(0)
 
     return False, tempIndVarList, oldIndVarList
 
 
 class dist_P:
-    def __init__(self,inputFile) -> None:
+    def __init__(self, inputFile) -> None:
         self.sampler
 
+
 class IdealSampleRetriever:
-    def __init__(self,inputFile):
+    def __init__(self, inputFile):
         self.sampler = samp(cnfFile=inputFile)
         self.sampler.compile()
         self.sampler.parse()
         self.weight = self.sampler.annotate()
 
-    def getSolutionFromIdeal(self,numSolutions):
+    def getSolutionFromIdeal(self, numSolutions):
         return self.getSolutionFromWAPS(numSolutions)
 
-    def getSolutionFromWAPS(self,numSolutions):
+    def getSolutionFromWAPS(self, numSolutions):
         samples = self.sampler.sample(totalSamples=numSolutions)
         solList = list(samples)
         solList = [i.strip().split() for i in solList]
@@ -712,9 +730,9 @@ def chainFormulaSetup(sampleSol, unifSol, numSolutions):
     indicatorLits.append(sampleLitList)
     indicatorLits.append(unifLitList)
 
-    #print("countList:", countList)
-    #print("newVarList:", newVarList)
-    #print("indicatorLits:", indicatorLits)
+    # print("countList:", countList)
+    # print("newVarList:", newVarList)
+    # print("indicatorLits:", indicatorLits)
     return ChainFormulaSetup(countList, newVarList, indicatorLits)
 
 
@@ -745,23 +763,24 @@ def check_cnf(fname):
 
         if line[0] == "c":
             continue
-        
+
         if line[0] == "w":
             assert len(line) == 3
             var = int(line[1])
             weight = float(line[2])
-            assert(0 <= weight <= 1)
+            assert (0 <= weight <= 1)
             max_var = max(var, max_var)
-            continue  
+            continue
 
-        cls +=1
+        cls += 1
         for l in line:
             var = abs(int(l))
             max_var = max(var, max_var)
 
     if max_var > given_vars:
         print("ERROR: Number of variables given is LESS than the number of variables ued")
-        print("ERROR: Vars in header: %d   max var: %d" % (given_vars, max_var))
+        print("ERROR: Vars in header: %d   max var: %d" %
+              (given_vars, max_var))
         return False
 
     if cls != given_cls:
@@ -772,6 +791,8 @@ def check_cnf(fname):
     return True
 
 # Returns bias wrt sample
+
+
 def biasFind(sample, solList, indVarList):
     solMap = {}
     numSolutions = len(solList)
@@ -790,7 +811,7 @@ def biasFind(sample, solList, indVarList):
     if not bool(solMap):
         print("No Solutions were given to the test")
         exit(1)
-    
+
     print("c Printing counts of each sample: ", list(solMap.values()))
 
     solution = ""
@@ -799,10 +820,10 @@ def biasFind(sample, solList, indVarList):
         if abs(i) in indVarList:
             solution += str(i) + " "
 
-    #print("solList[0]", solList[0])
-    #print("sample", sample)
+    # print("solList[0]", solList[0])
+    # print("sample", sample)
 
-    if(len(set(solList[0]).intersection(set(sample))) == len(sample)):
+    if (len(set(solList[0]).intersection(set(sample))) == len(sample)):
         return solMap.get(solution, 0)*1.0/numSolutions
     else:
         return 1.0-(solMap.get(solution, 0)*1.0/numSolutions)
@@ -810,16 +831,16 @@ def biasFind(sample, solList, indVarList):
 
 class SolutionRetriever:
 
-    
     @staticmethod
     def getSolutionFromSampler(inputFile, numSolutions, samplerType, indVarList, verbosity, newSeed):
-        topass_withseed = (inputFile, numSolutions, indVarList, verbosity, newSeed)
+        topass_withseed = (inputFile, numSolutions,
+                           indVarList, verbosity, newSeed)
         ok = check_cnf(inputFile)
         if not ok:
-            print("ERROR: CNF is malformatted. Sampler may give wrong solutions in this case. Exiting.")
+            print(
+                "ERROR: CNF is malformatted. Sampler may give wrong solutions in this case. Exiting.")
             print("File is: %s" % inputFile)
             exit(-1)
-
 
         print("Using sampler: %s" % get_sampler_string(samplerType))
         if (samplerType == SAMPLER_UNIGEN3):
@@ -829,13 +850,15 @@ class SolutionRetriever:
             sols = SolutionRetriever.getSolutionFromAppMC3(*topass_withseed)
 
         elif (samplerType == SAMPLER_QUICKSAMPLER):
-            sols = SolutionRetriever.getSolutionFromQuickSampler(*topass_withseed)
+            sols = SolutionRetriever.getSolutionFromQuickSampler(
+                *topass_withseed)
 
         elif (samplerType == SAMPLER_STS):
             sols = SolutionRetriever.getSolutionFromSTS(*topass_withseed)
 
         elif (samplerType == SAMPLER_CMS):
-            sols = SolutionRetriever.getSolutionFromCMSsampler(*topass_withseed)
+            sols = SolutionRetriever.getSolutionFromCMSsampler(
+                *topass_withseed)
 
         elif (samplerType == SAMPLER_SPUR):
             sols = SolutionRetriever.getSolutionFromSpur(*topass_withseed)
@@ -857,7 +880,8 @@ class SolutionRetriever:
         tempOutputFile = tempfile.gettempdir()+'/'+inputFileSuffix+".txt"
 
         cmd = './samplers/unigen --samples='+str(numSolutions)
-        cmd += ' ' + inputFile + ' ' + str(tempOutputFile) + ' > /dev/null 2>&1'
+        cmd += ' ' + inputFile + ' ' + \
+            str(tempOutputFile) + ' > /dev/null 2>&1'
         if verbosity:
             print("cmd: ", cmd)
         os.system(cmd)
@@ -871,7 +895,8 @@ class SolutionRetriever:
             if line.startswith('v'):
                 freq = int(line.split(':')[-1])
                 for i in range(freq):
-                    sol = line.split(':')[0].replace('v', '').strip().split()[:-1]
+                    sol = line.split(':')[0].replace(
+                        'v', '').strip().split()[:-1]
                     sol = [int(i) for i in sol]
                     solList.append(sol)
 
@@ -888,7 +913,8 @@ class SolutionRetriever:
         inputFileSuffix = inputFile.split('/')[-1][:-4]
         tempOutputFile = tempfile.gettempdir()+'/'+inputFileSuffix+".txt"
 
-        cmd = './samplers/approxmc3 -s ' + str(newSeed) + ' -v 0 --samples ' + str(numSolutions)
+        cmd = './samplers/approxmc3 -s ' + \
+            str(newSeed) + ' -v 0 --samples ' + str(numSolutions)
         cmd += ' --sampleout ' + str(tempOutputFile)
         cmd += ' ' + inputFile + ' > /dev/null 2>&1'
         if verbosity:
@@ -916,7 +942,8 @@ class SolutionRetriever:
 
     @staticmethod
     def getSolutionFromQuickSampler(inputFile, numSolutions, indVarList, verbosity, newSeed):
-        cmd = "./samplers/quicksampler -n "+str(numSolutions*5)+' '+str(inputFile)+' > /dev/null 2>&1'
+        cmd = "./samplers/quicksampler -n " + \
+            str(numSolutions*5)+' '+str(inputFile)+' > /dev/null 2>&1'
         if verbosity:
             print("cmd: ", cmd)
         os.system(cmd)
@@ -944,7 +971,7 @@ class SolutionRetriever:
                 if (x == '0'):
                     sol.append(-1*indVarList[i])
                 else:
-                    sol.append(indVarList[i])                
+                    sol.append(indVarList[i])
                 i += 1
             solList.append(sol)
 
@@ -979,16 +1006,16 @@ class SolutionRetriever:
             if (line.startswith('#START_SAMPLES')):
                 startParse = True
                 continue
-            if (not(startParse)):
+            if (not (startParse)):
                 continue
             if (line.startswith('#END_SAMPLES')):
                 startParse = False
                 continue
             fields = line.strip().split(',')
-            
+
             solCount = int(fields[0])
             sol = []
-            
+
             i = 1
             for x in list(fields[1]):
                 if (x == '0'):
@@ -996,7 +1023,7 @@ class SolutionRetriever:
                 else:
                     sol.append(i)
                 i += 1
-                
+
             for i in range(solCount):
                 solList.append(sol)
 
@@ -1009,7 +1036,8 @@ class SolutionRetriever:
         samplingRounds = numSolutions/kValue + 1
         inputFileSuffix = inputFile.split('/')[-1][:-4]
         outputFile = tempfile.gettempdir()+'/'+inputFileSuffix+".out"
-        cmd = './samplers/STS -k='+str(kValue)+' -nsamples='+str(samplingRounds)+' '+str(inputFile)
+        cmd = './samplers/STS -k=' + \
+            str(kValue)+' -nsamples='+str(samplingRounds)+' '+str(inputFile)
         cmd += ' > '+str(outputFile)
         if verbosity:
             print("cmd: ", cmd)
@@ -1021,7 +1049,7 @@ class SolutionRetriever:
         solList = []
         shouldStart = False
         for j in range(len(lines)):
-            if(lines[j].strip() == 'Outputting samples:' or lines[j].strip() == 'start'):
+            if (lines[j].strip() == 'Outputting samples:' or lines[j].strip() == 'start'):
                 shouldStart = True
                 continue
             if (lines[j].strip().startswith('Log') or lines[j].strip() == 'end'):
@@ -1039,14 +1067,13 @@ class SolutionRetriever:
                     i += 1
                 solList.append(sol)
 
-
         if len(solList) < numSolutions:
             print(len(solList))
             print("STS Did not find required number of solutions")
             sys.exit(1)
         elif len(solList) > numSolutions:
             solList = random.sample(solList, numSolutions)
-        
+
         os.unlink(outputFile)
         return solList
 
@@ -1091,6 +1118,7 @@ class SolutionRetriever:
         os.unlink(outputFile)
         return solreturnList
 
+
 class cnf_test:
     def __init__(self, samplerType, inputFile, maxSamples):
         inputFileSuffix = inputFile.split('/')[-1][:-4]
@@ -1103,19 +1131,21 @@ class cnf_test:
         self.totalSamplesGenerated = 0
         self.samplerString = get_sampler_string(samplerType)
 
-
     def CM_test(self, epsilon, eta, delta, verbosity, seed):
-        
+
         totalLoops = int(ceil(log(2.0/(eta+2*epsilon), 2))+1)
         listforTraversal = range(totalLoops, 0, -1)
-        
+
         for j in listforTraversal:
-            tj = ceil(pow(2, j)*(2*epsilon+eta)/((eta-2*epsilon)**2)*log(4.0/(eta+2*epsilon), 2)*(4*e/(e-1)*log(1.0/delta)))
-            beta = (pow(2, j-1)+1)*(eta + 2*epsilon)*1.0/(4+(2*epsilon+eta)*(pow(2, j-1) - 1))
+            tj = ceil(pow(2, j)*(2*epsilon+eta)/((eta-2*epsilon)**2)
+                      * log(4.0/(eta+2*epsilon), 2)*(4*e/(e-1)*log(1.0/delta)))
+            beta = (pow(2, j-1)+1)*(eta + 2*epsilon)*1.0 / \
+                (4+(2*epsilon+eta)*(pow(2, j-1) - 1))
             gamma = (beta-2*epsilon)/4
             constantFactor = ceil(1/(8.79*gamma*gamma))
-            boundFactor = log((16)*(e/(e-1))*(1/(delta*(eta-2*epsilon)**2))*log(4/(eta+2*epsilon), 2)*log(1/delta), 2)
-            
+            boundFactor = log((16)*(e/(e-1))*(1/(delta*(eta-2*epsilon)**2))
+                              * log(4/(eta+2*epsilon), 2)*log(1/delta), 2)
+
             if verbosity:
                 print("constantFactor:{:<4} boundFactor: {:<20} logBoundFactor: {:<20}".format(
                     constantFactor, boundFactor, log(boundFactor, 2)))
@@ -1132,7 +1162,8 @@ class cnf_test:
             breakExperiment = False
 
             for i in range(int(tj)):
-                breakExperiment = self.inner_loop(j, i, tj, loThresh, hiThresh, verbosity)
+                breakExperiment = self.CM_inner_loop(
+                    j, i, tj, loThresh, hiThresh, verbosity)
 
                 if breakExperiment:
                     break
@@ -1144,7 +1175,7 @@ class cnf_test:
             print("Accept:1 TotalSamplesGenerated:{0} ".format(
                 self.totalSamplesGenerated))
 
-    def inner_loop(self, j, i, tj, loThresh, hiThresh, verbosity):
+    def CM_inner_loop(self, j, i, tj, loThresh, hiThresh, verbosity):
         self.thresholdSolutions += self.numSolutions
 
         # generate a new seed value for every different (i,j,experiment)
@@ -1159,7 +1190,8 @@ class cnf_test:
             self.inputFile, 1, SAMPLER_SPUR, self.indVarList, verbosity, newSeed)
         self.totalSamplesGenerated += 1
 
-        chainFormulaConf = chainFormulaSetup(sampleSol, unifSol, self.numSolutions)
+        chainFormulaConf = chainFormulaSetup(
+            sampleSol, unifSol, self.numSolutions)
         identical_sol, tempIndVarList, oldIndVarList = constructNewCNF(
             self.inputFile, self.tempFile, sampleSol[0], unifSol[0],
             chainFormulaConf, self.indVarList)
@@ -1181,7 +1213,7 @@ class cnf_test:
         bias = biasFind(unifSol[0], solList, oldIndVarList)
 
         if loThresh <= bias <= hiThresh:
-            isUniform = True 
+            isUniform = True
         else:
             isUniform = False
 
@@ -1199,3 +1231,38 @@ class cnf_test:
             return True
 
         return False
+
+    def PM_test(inputFile, samplerType, eta, epsilon, delta, maxSamples, verbosity, seed):
+        UserInputFile = args.input
+        print("This is the user input:--", UserInputFile)
+
+        inputFilePrefix = UserInputFile.split("/")[-1][:-4]
+        inputFile = inputFilePrefix + "."+str(samplerType)+".cnf"
+
+        print("This is the output file after weighted to unweighted:", inputFile)
+
+        UserIndVarList = parseIndSupport(UserInputFile)
+        indVarList = list(chainform.Transform(
+            UserInputFile, inputFile, 2))  # precision set to 4
+
+        weight_map = parseWeights(UserInputFile, UserIndVarList)
+
+        totalSolsGenerated = 0
+
+        numVars = len(UserIndVarList)
+        K = int(ceil(numVars*log(2, 2)+log(100/eta, 2)))
+
+        theta = eta/20
+        print("K", K)
+
+        ideal = IdealSampleRetriever(inputFile=UserInputFile)
+
+        dhat, totalSolsGenerated = outsideBucket(
+            K, theta, delta/2, UserInputFile, inputFile, samplerType, indVarList, UserIndVarList, weight_map, ideal, maxSamples, seed)
+
+        if dhat - theta > epsilon/2:
+            print("Rejected as dhat("+str(dhat)+") > eps/2 ("+str(epsilon/2)+") ")
+        else:
+            eps2 = dhat + theta
+            insideBucket(K, epsilon, eps2, eta, delta/2, UserInputFile, inputFile, samplerType,
+                         indVarList, UserIndVarList, weight_map, ideal, totalSolsGenerated, maxSamples, seed)
