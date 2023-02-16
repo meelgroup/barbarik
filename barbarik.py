@@ -59,7 +59,11 @@ if __name__ == "__main__":
     seed = args.seed
     random.seed(seed)
     
-    if ftype == FILE_CNF:
+    #sanity checks
+    if epsilon >= eta:
+        print("epsilon must be less than eta")
+
+    elif ftype == FILE_CNF:
         
         experiment = cnf_test(args.sampler, inputFile, maxSamples)
 
