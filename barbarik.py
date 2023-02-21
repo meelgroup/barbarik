@@ -72,13 +72,10 @@ if __name__ == "__main__":
 
     elif ftype == FILE_CNF:
 
-        experiment = cnf_test(args.sampler, inputFile, maxSamples)
+        experiment = cnf_test(args.sampler, inputFile, eta, epsilon, delta, maxSamples,verbosity)
 
         if testtype == UNIF_TEST:
-            experiment.CM_test(epsilon, eta, delta, verbosity, seed)
+            experiment.CM_test(seed)
 
         elif testtype == GEN_TEST:
-            P = ideal_sampler(inputFile)
-            Q = weighted_sampler_under_test(args.samplerQ)
-            PM_general_test(P, Q, eta, epsilon, delta,
-                            maxSamples, verbosity, seed)
+            experiment.PM_test(seed)

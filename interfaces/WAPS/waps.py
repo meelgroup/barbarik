@@ -186,7 +186,7 @@ class sampler:
             self.isSamplingSetPresent = True
         else:
             self.samplingSet = list(range(1, self.totalVariables + 1))
-        print("Seperating weights from Input cnf")
+        print("Separating weights from Input cnf")
         weighttext = ""
         print("Extracting the Sampling Set")
         if (
@@ -638,7 +638,7 @@ def main():
         weights = {}
     sampler = sampler2()
     if inputFile:
-        print("Seperating weights from Input cnf")
+        print("Separating weights from Input cnf")
         weighttext = ""
         with open(inputFile, "r") as f:
             text = f.read()

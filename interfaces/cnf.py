@@ -281,7 +281,7 @@ def constructKernel(inputFile, tempFile, samplerSample, idealSample, numSolution
     return tempIndVarList
 
 
-def insideBucket(K, eps, eps2, eta, delta, UserInputFile, inputFile, samplerType, indVarList, UserIndVarList, weight_map, ideal, totalSolsGenerated, seed):
+def insideBucket(self, K, eps, eps2, eta, delta, UserInputFile, inputFile, indVarList, UserIndVarList, weight_map, ideal, totalSolsGenerated, seed):
 
     print("eta", eta)
     print("eps2", eps2)
@@ -319,7 +319,7 @@ def insideBucket(K, eps, eps2, eta, delta, UserInputFile, inputFile, samplerType
 
         Psamples = AllPsamples[i*M:(i+1)*M]
         Qsamples = getSolutionFromSampler(
-            seed, inputFile, M, samplerType, indVarList)
+            seed, inputFile, M, self.samplerType, indVarList)
 
         projectedQsamples = []
         for sample in Qsamples:
@@ -379,7 +379,7 @@ def insideBucket(K, eps, eps2, eta, delta, UserInputFile, inputFile, samplerType
             R = hoeffding(L, H, delta/(4*collisions*T))
             print("R #of PAIRCOND queries "+str(R))
 
-            if (totalSolsGenerated + R > maxSamples):
+            if (totalSolsGenerated + R > self.maxSamples):
                 print("Looking for more than 10**7 solutions", R)
                 print("too many to ask ,so quitting here")
                 print("NumSol:", totalSolsGenerated)
@@ -392,7 +392,7 @@ def insideBucket(K, eps, eps2, eta, delta, UserInputFile, inputFile, samplerType
             # print("file was constructed with these", Qsample, Psample)
             # print("samplingList:", samplinglist)
             solList = getSolutionFromSampler(
-                seed, tempFile, R, samplerType, samplinglist)
+                seed, tempFile, R, self.samplerType, samplinglist)
             totalSolsGenerated += R
 
             seed += 1
@@ -416,7 +416,7 @@ def insideBucket(K, eps, eps2, eta, delta, UserInputFile, inputFile, samplerType
     return 1
 
 
-def outsideBucket(K, theta, delta, UserInputFile, inputFile, samplerType, indVarList, UserIndVarList, weight_map, ideal, seed):
+def outsideBucket(self, K, theta, delta, UserInputFile, inputFile, indVarList, UserIndVarList, weight_map, ideal, seed):
 
     numSamp = int(ceil(max(4*(K+1), 8*log(4/delta))/(theta)**2))
 
@@ -425,7 +425,7 @@ def outsideBucket(K, theta, delta, UserInputFile, inputFile, samplerType, indVar
 
     Psamples = ideal.getSolutionFromIdeal(numSamp)
     Qsamples = getSolutionFromSampler(
-        seed, inputFile, numSamp, samplerType, indVarList)
+        seed, inputFile, numSamp, self.samplerType, indVarList)
 
     total_weight = ideal.weight
     lower_threshold_probability = int(log(total_weight, 2))
@@ -1120,18 +1120,25 @@ class SolutionRetriever:
 
 
 class cnf_test:
-    def __init__(self, samplerType, inputFile, maxSamples):
+    def __init__(self, samplerType, inputFile, eta, epsilon, delta, maxSamples, verbosity):
         inputFileSuffix = inputFile.split('/')[-1][:-4]
         self.tempFile = tempfile.gettempdir() + "/" + inputFileSuffix+"_t.cnf"
         self.indVarList = parseIndSupport(inputFile)
         self.inputFile = inputFile
+        self.eta = eta
+        self.epsilon = epsilon
+        self.delta = delta
         self.samplerType = samplerType
         self.maxSamples = maxSamples
         self.thresholdSolutions = 0
         self.totalSamplesGenerated = 0
         self.samplerString = get_sampler_string(samplerType)
+        self.verbosity = verbosity
 
-    def CM_test(self, epsilon, eta, delta, verbosity, seed):
+    def CM_test(self, seed):
+        eta = self.eta
+        epsilon = self.epsilon
+        delta = self.delta
 
         totalLoops = int(ceil(log(2.0/(eta+2*epsilon), 2))+1)
         listforTraversal = range(totalLoops, 0, -1)
@@ -1146,7 +1153,7 @@ class cnf_test:
             boundFactor = log((16)*(e/(e-1))*(1/(delta*(eta-2*epsilon)**2))
                               * log(4/(eta+2*epsilon), 2)*log(1/delta), 2)
 
-            if verbosity:
+            if self.verbosity:
                 print("constantFactor:{:<4} boundFactor: {:<20} logBoundFactor: {:<20}".format(
                     constantFactor, boundFactor, log(boundFactor, 2)))
                 print("tj: {:<6} totalLoops: {:<5} beta: {:<10} epsilon: {:<10}".format(
@@ -1163,7 +1170,7 @@ class cnf_test:
 
             for i in range(int(tj)):
                 breakExperiment = self.CM_inner_loop(
-                    j, i, tj, loThresh, hiThresh, verbosity)
+                    j, i, tj, loThresh, hiThresh)
 
                 if breakExperiment:
                     break
@@ -1175,19 +1182,19 @@ class cnf_test:
             print("Accept:1 TotalSamplesGenerated:{0} ".format(
                 self.totalSamplesGenerated))
 
-    def CM_inner_loop(self, j, i, tj, loThresh, hiThresh, verbosity):
+    def CM_inner_loop(self, j, i, tj, loThresh, hiThresh):
         self.thresholdSolutions += self.numSolutions
 
         # generate a new seed value for every different (i,j,experiment)
         newSeed = int(i*tj+j)
         # get sampler's solutions
         sampleSol = SolutionRetriever.getSolutionFromSampler(
-            self.inputFile, 1, self.samplerType, self.indVarList, verbosity, newSeed)
+            self.inputFile, 1, self.samplerType, self.indVarList, self.verbosity, newSeed)
         self.totalSamplesGenerated += 1
 
         # get uniform sampler's solutions
         unifSol = SolutionRetriever.getSolutionFromSampler(
-            self.inputFile, 1, SAMPLER_SPUR, self.indVarList, verbosity, newSeed)
+            self.inputFile, 1, SAMPLER_SPUR, self.indVarList, self.verbosity, newSeed)
         self.totalSamplesGenerated += 1
 
         chainFormulaConf = chainFormulaSetup(
@@ -1205,7 +1212,7 @@ class cnf_test:
 
         # get sampler's solutions
         solList = SolutionRetriever.getSolutionFromSampler(
-            self.tempFile, self.numSolutions, self.samplerType, tempIndVarList, verbosity, newSeed)
+            self.tempFile, self.numSolutions, self.samplerType, tempIndVarList, self.verbosity, newSeed)
         os.unlink(self.tempFile)
         self.totalSamplesGenerated += self.numSolutions
 
@@ -1232,20 +1239,21 @@ class cnf_test:
 
         return False
 
-    def PM_test(inputFile, samplerType, eta, epsilon, delta, maxSamples, verbosity, seed):
-        UserInputFile = args.input
-        print("This is the user input:--", UserInputFile)
+    def PM_test(self, seed):
+        maxSamples = self.maxSamples
+        epsilon, eta, delta = self.epsilon, self.eta, self.delta
+        print("This is the user input:--", self.inputFile)
 
-        inputFilePrefix = UserInputFile.split("/")[-1][:-4]
-        inputFile = inputFilePrefix + "."+str(samplerType)+".cnf"
+        inputFilePrefix = self.inputFile.split("/")[-1][:-4]
+        inputFile = inputFilePrefix + "."+str(self.samplerType)+".cnf"
 
         print("This is the output file after weighted to unweighted:", inputFile)
 
-        UserIndVarList = parseIndSupport(UserInputFile)
+        UserIndVarList = parseIndSupport(self.inputFile)
         indVarList = list(chainform.Transform(
-            UserInputFile, inputFile, 2))  # precision set to 4
+            self.inputFile, inputFile, 2))  # precision set to 4
 
-        weight_map = parseWeights(UserInputFile, UserIndVarList)
+        weight_map = parseWeights(self.inputFile, UserIndVarList)
 
         totalSolsGenerated = 0
 
@@ -1255,14 +1263,14 @@ class cnf_test:
         theta = eta/20
         print("K", K)
 
-        ideal = IdealSampleRetriever(inputFile=UserInputFile)
+        ideal = IdealSampleRetriever(inputFile=self.inputFile)
 
-        dhat, totalSolsGenerated = outsideBucket(
-            K, theta, delta/2, UserInputFile, inputFile, samplerType, indVarList, UserIndVarList, weight_map, ideal, maxSamples, seed)
+        dhat, totalSolsGenerated = outsideBucket(self, 
+            K, theta, delta/2, self.inputFile, inputFile, indVarList, UserIndVarList, weight_map, ideal, maxSamples, seed)
 
         if dhat - theta > epsilon/2:
             print("Rejected as dhat("+str(dhat)+") > eps/2 ("+str(epsilon/2)+") ")
         else:
             eps2 = dhat + theta
-            insideBucket(K, epsilon, eps2, eta, delta/2, UserInputFile, inputFile, samplerType,
+            insideBucket(K, epsilon, eps2, eta, delta/2, self.inputFile, inputFile,
                          indVarList, UserIndVarList, weight_map, ideal, totalSolsGenerated, maxSamples, seed)
