@@ -303,8 +303,8 @@ def insideBucket(K, eps, eps2, eta, delta, UserInputFile, inputFile, samplerType
     T = int(ceil(log(2/delta)/log(10/(10 - eps1 + alpha))))
     print("T #of iteration = " + str(T))
 
-    assert(M > 0)
-    assert(T > 0)
+    assert (M > 0)
+    assert (T > 0)
 
     print("indVarList", indVarList)
 
