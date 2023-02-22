@@ -313,7 +313,7 @@ class sampler:
             conditionWeights(conditionVars, self.weights)
         elif self.conditionVars:
             conditionWeights(self.conditionVars, self.weights)
-        self._annotate(self.treenodes[-1], weights=self.weights)
+        return self._annotate(self.treenodes[-1], weights=self.weights)
 
     def _annotate(self, root, weights={}):
         """Actually annotates d-DNNF with weights"""

@@ -38,7 +38,7 @@ if __name__ == "__main__":
     parser.add_argument('--eta', type=float,
                         help="default = 0.9", default=0.9, dest='eta')
     parser.add_argument('--epsilon', type=float,
-                        help="default = 0.3", default=0.3, dest='epsilon')
+                        help="default = 0.1", default=0.1, dest='epsilon')
     parser.add_argument('--delta', type=float,
                         help="default = 0.05", default=0.05, dest='delta')
     parser.add_argument('--ftype', type=int, help=filetypes,
