@@ -6,7 +6,6 @@ import random
 import tempfile
 
 from WAPS.waps import sampler as samp
-import interfaces.weightcount.WeightCount as chainform
 from interfaces.weightcount.weighted_to_unweighted import *
 
 SAMPLER_UNIGEN3 = 1
