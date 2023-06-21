@@ -6,7 +6,7 @@ import random
 import tempfile
 
 from WAPS.waps import sampler as samp
-from interfaces.weightcount.weighted_to_unweighted import *
+from interfaces.weighted_to_unweighted.weighted_to_unweighted import *
 
 SAMPLER_UNIGEN3 = 1
 SAMPLER_QUICKSAMPLER = 2
@@ -1044,7 +1044,9 @@ class cnf_test:
         with open(self.inputFile, 'r') as f:
             lines = f.readlines()
 
-        indVarList = list(c.transform(lines, unweighted_inputFile))
+        c.transform(lines, unweighted_inputFile)
+        indVarList = list(c.samplSet)
+
         print("This is the output file after weighted to unweighted:",
               unweighted_inputFile)
         weight_map = parseWeights(self.inputFile, UserIndVarList)
