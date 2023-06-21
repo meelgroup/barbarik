@@ -6,7 +6,7 @@ import random
 import tempfile
 
 from WAPS.waps import sampler as samp
-from interfaces.weighted_to_unweighted.weighted_to_unweighted import *
+from .convert.weighted_to_unweighted import *
 
 SAMPLER_UNIGEN3 = 1
 SAMPLER_QUICKSAMPLER = 2
