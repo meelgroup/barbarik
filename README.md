@@ -10,6 +10,7 @@ To test QuickSampler:
 ```
 git clone --depth 1 https://github.com/meelgroup/barbarik.git
 cd barbarik
+git submodule update --init --recursive
 python3 barbarik.py --seed 1 --sampler 2 blasted_case110.cnf
 ```
 
