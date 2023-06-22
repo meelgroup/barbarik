@@ -1183,8 +1183,8 @@ class cnf_test:
 
                 seed += 1
                 c_hat = biasFind(Psample, solList, UserIndVarList)
-
-                cmd = "rm " + outputFile + " " + unweighted_inputFile
+                print(outputFile, unweighted_inputFile)
+                cmd = "rm " + outputFile 
                 os.system(cmd)
                 print("chat", c_hat)
                 print("thresh", (H+L)/2)
