@@ -971,6 +971,8 @@ class cnf_test:
         if not breakExperiment:
             print("Accept:1 TotalSamplesGenerated:{0} ".format(
                 self.totalSamplesGenerated))
+            cmd = "rm *.nnf " + self.tempFile
+            os.system(cmd)
 
     def CM_inner_loop(self, j, i, tj, loThresh, hiThresh):
         self.thresholdSolutions += self.numSolutions
@@ -1027,6 +1029,9 @@ class cnf_test:
         if self.thresholdSolutions > self.maxSamples:
             return True
 
+        cmd = "rm *.nnf " + self.tempFile
+        os.system(cmd)
+
         return False
 
     def PM_test(self, seed):
@@ -1065,6 +1070,9 @@ class cnf_test:
 
         if dhat - theta > epsilon/2:
             print("Rejected as dhat("+str(dhat)+") > eps/2 ("+str(epsilon/2)+") ")
+            cmd = "rm *.nnf " + unweighted_inputFile
+            os.system(cmd)
+            
         else:
             eps2 = dhat + theta
             self.insideBucket(K, epsilon, eps2, eta, delta/2, unweighted_inputFile,
@@ -1183,7 +1191,6 @@ class cnf_test:
 
                 seed += 1
                 c_hat = biasFind(Psample, solList, UserIndVarList)
-                print(outputFile, unweighted_inputFile)
                 cmd = "rm " + outputFile 
                 os.system(cmd)
                 print("chat", c_hat)
@@ -1191,12 +1198,19 @@ class cnf_test:
                 if c_hat < (H+L)/2:
                     print("Rejected at iteration: ", i)
                     print("NumSol total", totalSolsGenerated)
+
+                    cmd = "rm *nnf " + unweighted_inputFile
+                    os.system(cmd)
+
                     return 0
 
             print("Accept on round: ", i)
 
         print("All rounds passed")
         print("NumSol total", totalSolsGenerated)
+
+        cmd = "rm *nnf" + unweighted_inputFile
+        os.system(cmd)
 
         return 1
 
