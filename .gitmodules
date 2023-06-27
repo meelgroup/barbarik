@@ -1,0 +1,3 @@
+[submodule "interfaces/convert"]
+	path = interfaces/convert
+	url = https://github.com/meelgroup/weighted-to-unweighted
