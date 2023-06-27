@@ -1,3 +1,0 @@
-digraph backdoorgraph {
-root [label="T"];
-}
