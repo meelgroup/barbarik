@@ -2,7 +2,7 @@
 
 # Barbarik, a testing framework for samplers
 
-'Barbarik' is a framework developed to test whether a sampler samples from a target distribution. To read more about Barbarik, have a look at our papers [AAAI'19](https://www.comp.nus.edu.sg/~meel/Papers/aaai19-cm.pdf), [NeurIPS'20](https://arxiv.org/abs/2010.12918), and [NeurIPS'22](https://www.comp.nus.edu.sg/~meel/Papers/neurips22.pdf).
+'Barbarik' is a framework developed to test whether a sampler samples from a target distribution. To read more about Barbarik, have a look at our papers [AAAI'19](https://www.cs.toronto.edu/~meel/Papers/aaai19-cm.pdf), [NeurIPS'20](https://arxiv.org/abs/2010.12918), and [NeurIPS'22](https://arxiv.org/abs/2306.13958).
 
 ## Getting Started
 
