@@ -31,7 +31,7 @@ To run a custom sampler, make appropriate changes to the code -- look for the fo
 
 ## How to Cite
 
-If you use Barbarik, please cite the following papers : [AAAI'19](https://www.comp.nus.edu.sg/~meel/publications/CM19.bib), [NeurIPS'20](https://www.comp.nus.edu.sg/~meel/publications/MPC20.bib), and [NeurIPS'22](https://www.comp.nus.edu.sg/~meel/publications/PM22.bib).
+If you use Barbarik, please cite the following papers : [AAAI'19](https://ojs.aaai.org/index.php/AAAI/article/view/4774), [NeurIPS'20](https://dblp.org/rec/conf/nips/MeelP020.html?view=bibtex), and [NeurIPS'22](https://dblp.org/rec/conf/nips/PoteM22.html?view=bibtex).
 
 ## Contributors
 1. Kuldeep S. Meel
