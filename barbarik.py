@@ -352,11 +352,12 @@ class SolutionRetriver:
     def getSolutionFromCMSsampler(inputFile, numSolutions, indVarList, newSeed):
         inputFileSuffix = inputFile.split('/')[-1][:-4]
         outputFile = tempfile.gettempdir()+'/'+inputFileSuffix+".out"
-        cmd = "./samplers/cryptominisat5 --restart luby --maple 0 --verb 10 --nobansol"
-        cmd += " --scc 1 -n1 --presimp 0 --polar rnd --freq 0.9999"
-        cmd += " --random " + str(newSeed) + " --maxsol " + str(numSolutions)
+        cmd = "../cmsgen/build/cmsgen --verb 0"
+        cmd += " --seed " + str(newSeed) + " --samples " + str(numSolutions)
+        cmd += " --samplefile " + outputFile
         cmd += " " + inputFile
-        cmd += " --dumpresult " + outputFile + " > /dev/null 2>&1"
+        cmd += " > /dev/null 2>&1"
+        print("cmd: ", cmd)
 
         if args.verbose:
             print("cmd: ", cmd)
